@@ -66,6 +66,8 @@ BOOLEAN   (true|false)
   */ 
 
 [\n]		{currentLineNum++; currentColNum = 1;}
+\t		{currentColNum += 8;}
+\0		{currentColNum += 1;}
 
 void 		{return T_Void;}
 
