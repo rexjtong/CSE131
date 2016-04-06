@@ -66,11 +66,74 @@ BOOLEAN   (true|false)
   */ 
 
 [\n]		{currentLineNum++; currentColNum = 1;}
-\t		{currentColNum += 8;}
-\0		{currentColNum += 1;}
 
 void 		{return T_Void;}
+while   {return T_While;}
+if      {return T_If;}
+else    {return T_Else;}
 
+for     {return T_For;}
+const   {return T_Const;}
+break   {return T_Const;}
+continue  {return T_Continue;}
+do      {return T_Do;}
+return  {return T_Return;}
+switch  {return T_Switch;}
+case    {return T_Case;}
+struct  {return T_Struct;}
+default {return T_Default;}
+uniform {return T_Uniform;}
+float   {return T_Float;}
+int     {return T_Int;}
+"unsigned int" {return T_Uint;}
+bool    {return T_Bool;}
+in      {return T_In;}
+out     {return T_Out;}
+
+vec2    {return T_Vec2;}
+vec3    {return T_Vec3;}
+vec4    {return T_Vec4;}
+ivec2   {return T_Ivec2;}
+ivec3   {return T_Ivec3;}
+ivec4   {return T_Ivec4;}
+bvec2   {return T_Bvec2;}
+bvec3   {return T_Bvec3;}
+bvec4   {return T_Bvec4;}
+uvec2   {return T_Uvec2;}
+uvec3   {return T_Uvec3;}
+uvec4   {return T_Uvec4;}
+mat2    {return T_Mat2;}
+mat3    {return T_Mat3;}
+mat4    {return T_Mat4;}
+
+true  {yylval.boolConstant = true; return T_BoolConstant;}
+false {yylval.boolConstant = false; return T_BoolConstant;}
+
+"-"?[0-9]+    {yylval.integerConstant = strtol(yytext, NULL, 10); return T_IntConstant;}
+"-"?[0-9]*.[0-9]*"f"?   {yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
+
+"++"    {return T_Inc;}
+"--"    {return T_Dec;}
+"<="    {return T_LessEqual;}
+">="    {return T_GreaterEqual;}
+"!="    {return T_NE;}
+"=="    {return T_EQ;}
+"="     {return T_Equal;}
+"&&"    {return T_And;}
+"||"    {return T_Or;}
+"*="    {return T_MulAssign;}
+"/="    {return T_DivAssign;}
+"+="    {return T_AddAssign;}
+"-="    {return T_SubAssign;}
+"-"     {return T_Dash;}
+"+"     {return T_Plus;}
+"*"     {return T_Star;}
+"/"     {return T_Slash;}
+"<"     {return T_LeftAngle;}
+">"     {return T_RightAngle;}
+"?"     {return T_Question;}
+
+" "
 %%
 
 /* The closing %% above marks the end of the Rules section and the beginning
