@@ -163,6 +163,8 @@ false {yylval.boolConstant = false; return T_BoolConstant;}
 [0-9]+"u"?		{yylval.integerConstant = strtol(yytext, NULL, 10); return T_UintConstant;}
 [0-9]*"."[0-9]*"f"?	{yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
 
+.		{ReportError::UnrecogChar(&yylloc, *yytext);}
+
 %%
 
 /* The closing %% above marks the end of the Rules section and the beginning
