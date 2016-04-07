@@ -59,12 +59,12 @@ typedef enum {
     T_Case,		//
     T_Default,		//
     T_Identifier, 	// Have to handle errors and truncating still
-    T_TypeName,
+    T_TypeName,		//
     T_IntConstant, 	//
-    T_UintConstant, 	//??
+    T_UintConstant, 	//
     T_FloatConstant,	//
     T_BoolConstant, 	//
-    T_FieldSelection,
+    T_FieldSelection,	// Still needs to be truncated, error reported?
     T_Inc,		//
     T_Dec,		//
     T_LessEqual,	//
@@ -94,7 +94,7 @@ typedef enum {
     T_LeftAngle,	//
     T_RightAngle,	//
     T_Question,		//
-    T_NumTokenTypes
+    T_NumTokenTypes	//
 } TokenType;
 
  

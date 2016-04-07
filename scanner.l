@@ -59,7 +59,7 @@ int currentLineNum, currentColNum;
 
 BOOLEAN   (true|false)
 
-%x ML_COMMENT COMMENT
+%x ML_COMMENT COMMENT DOT
 %%             /* BEGIN RULES SECTION */
  /* All patterns and actions should be placed between the start and stop
   * %% markers which delimit the Rules section. 
@@ -68,7 +68,15 @@ BOOLEAN   (true|false)
 "/*"		{BEGIN(ML_COMMENT);}
 <ML_COMMENT>[^*\n]*
 <ML_COMMENT>"*"+[^*/\n]*
+<ML_COMMENT>[\n]	{currentLineNum++;}
 <ML_COMMENT>"*/"	{BEGIN(INITIAL);}
+
+"//"		{BEGIN(COMMENT);}
+<COMMENT>[^*\n]*
+<COMMENT>[\n]	{currentLineNum++; BEGIN(INITIAL);}
+
+<DOT>[^a-zA-Z]			{BEGIN(INITIAL);}		
+<DOT>[a-zA-Z][a-zA-Z0-9]*	{BEGIN(INITIAL); return T_FieldSelection;}
 
 
 " "     {}
@@ -148,7 +156,7 @@ false {yylval.boolConstant = false; return T_BoolConstant;}
 ")"	{return T_RightParen;}
 "["	{return T_LeftBracket;}
 "]"	{return T_RightBracket;}
-"."	{return T_Dot;}
+"."	{BEGIN(DOT); return T_Dot;}
 
 [a-zA-Z][a-zA-Z0-9]*	{return T_Identifier;}
 [0-9]+   		{yylval.integerConstant = strtol(yytext, NULL, 10); return T_IntConstant;}
