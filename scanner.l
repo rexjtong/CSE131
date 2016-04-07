@@ -59,19 +59,25 @@ int currentLineNum, currentColNum;
 
 BOOLEAN   (true|false)
 
-%x ML_COMMENT
+%x ML_COMMENT COMMENT
 %%             /* BEGIN RULES SECTION */
  /* All patterns and actions should be placed between the start and stop
   * %% markers which delimit the Rules section. 
   */ 
 
-" "     {currentColNum++;}
+"/*"		{BEGIN(ML_COMMENT);}
+<ML_COMMENT>[^*\n]*
+<ML_COMMENT>"*"+[^*/\n]*
+<ML_COMMENT>"*/"	{BEGIN(INITIAL);}
+
+
+" "     {}
 [\t]    {currentColNum += 8 - ((currentColNum-1) % 8);}
 
 
 [\n]		{currentLineNum++; currentColNum = 1;}
 
-void 		{return T_Void;}
+void 	{return T_Void;}
 while   {return T_While;}
 if      {return T_If;}
 else    {return T_Else;}
@@ -134,9 +140,20 @@ false {yylval.boolConstant = false; return T_BoolConstant;}
 "<"     {return T_LeftAngle;}
 ">"     {return T_RightAngle;}
 "?"     {return T_Question;}
+":"	{return T_Colon;}
+";"	{return T_Semicolon;}
+"{"	{return T_LeftBrace;}
+"}"	{return T_RightBrace;}
+"("	{return T_LeftParen;}
+")"	{return T_RightParen;}
+"["	{return T_LeftBracket;}
+"]"	{return T_RightBracket;}
+"."	{return T_Dot;}
 
-"-"?[0-9]+    {yylval.integerConstant = strtol(yytext, NULL, 10); return T_IntConstant;}
-"-"?[0-9]*.[0-9]*"f"?   {yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
+[a-zA-Z][a-zA-Z0-9]*	{return T_Identifier;}
+[0-9]+   		{yylval.integerConstant = strtol(yytext, NULL, 10); return T_IntConstant;}
+[0-9]+"u"?		{yylval.integerConstant = strtol(yytext, NULL, 10); return T_UintConstant;}
+[0-9]*"."[0-9]*"f"?	{yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
 
 %%
 

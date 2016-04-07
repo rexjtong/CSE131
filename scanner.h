@@ -24,7 +24,7 @@
 typedef enum { 
     T_Void = 256,	//
     T_Bool,		//
-    T_Float, 		////
+    T_Float, 		//
     T_Int, 		//
     T_Uint,		//
     T_Vec2, 		//
@@ -58,10 +58,10 @@ typedef enum {
     T_Switch,		//
     T_Case,		//
     T_Default,		//
-    T_Identifier, 
+    T_Identifier, 	// Have to handle errors and truncating still
     T_TypeName,
     T_IntConstant, 	//
-    T_UintConstant, 	
+    T_UintConstant, 	//??
     T_FloatConstant,	//
     T_BoolConstant, 	//
     T_FieldSelection,
@@ -77,16 +77,16 @@ typedef enum {
     T_DivAssign,	//
     T_AddAssign,	//
     T_SubAssign,	//
-    T_LeftParen,	
-    T_RightParen,	
-    T_LeftBracket,	
-    T_RightBracket,	
-    T_LeftBrace,	
-    T_RightBrace,	
-    T_Dot,		
-    T_Colon,		
+    T_LeftParen,	//
+    T_RightParen,	//
+    T_LeftBracket,	//
+    T_RightBracket,	//
+    T_LeftBrace,	//
+    T_RightBrace,	//
+    T_Dot,		//
+    T_Colon,		//
     T_Equal,		//
-    T_Semicolon,
+    T_Semicolon,	//
     T_Dash,		//
     T_Plus,		//
     T_Star,		//
