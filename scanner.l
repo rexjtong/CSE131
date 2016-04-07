@@ -69,6 +69,7 @@ BOOLEAN   (true|false)
 <ML_COMMENT>[^*\n]*
 <ML_COMMENT>"*"+[^*/\n]*
 <ML_COMMENT>[\n]	{currentLineNum++;}
+<ML_COMMENT><<EOF>>	{ReportError::UntermComment(); yyterminate();}
 <ML_COMMENT>"*/"	{BEGIN(INITIAL);}
 
 "//"		{BEGIN(COMMENT);}
