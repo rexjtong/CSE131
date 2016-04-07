@@ -65,6 +65,10 @@ BOOLEAN   (true|false)
   * %% markers which delimit the Rules section. 
   */ 
 
+" "     {currentColNum++;}
+[\t]    {currentColNum += 8 - ((currentColNum-1) % 8);}
+
+
 [\n]		{currentLineNum++; currentColNum = 1;}
 
 void 		{return T_Void;}
@@ -109,8 +113,6 @@ mat4    {return T_Mat4;}
 true  {yylval.boolConstant = true; return T_BoolConstant;}
 false {yylval.boolConstant = false; return T_BoolConstant;}
 
-"-"?[0-9]+    {yylval.integerConstant = strtol(yytext, NULL, 10); return T_IntConstant;}
-"-"?[0-9]*.[0-9]*"f"?   {yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
 
 "++"    {return T_Inc;}
 "--"    {return T_Dec;}
@@ -133,7 +135,9 @@ false {yylval.boolConstant = false; return T_BoolConstant;}
 ">"     {return T_RightAngle;}
 "?"     {return T_Question;}
 
-" "
+"-"?[0-9]+    {yylval.integerConstant = strtol(yytext, NULL, 10); return T_IntConstant;}
+"-"?[0-9]*.[0-9]*"f"?   {yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
+
 %%
 
 /* The closing %% above marks the end of the Rules section and the beginning
