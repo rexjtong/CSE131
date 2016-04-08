@@ -77,7 +77,7 @@ BOOLEAN   (true|false)
 <COMMENT>[\n]	{currentLineNum++; BEGIN(INITIAL);}
 
 <DOT>[^a-zA-Z]			{BEGIN(INITIAL);}		
-<DOT>[a-zA-Z][a-zA-Z0-9]*	{BEGIN(INITIAL); return T_FieldSelection;}
+<DOT>[a-zA-Z][a-zA-Z0-9]*	{strncpy(yylval.identifier,yytext,MaxIdentLen); if(yyleng > MaxIdentLen) {ReportError::LongIdentifier(&yylloc,yytext);} BEGIN(INITIAL); return T_FieldSelection;}
 
 
 " "     {}
