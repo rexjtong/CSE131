@@ -159,7 +159,7 @@ false {yylval.boolConstant = false; return T_BoolConstant;}
 "]"	{return T_RightBracket;}
 "."	{BEGIN(DOT); return T_Dot;}
 
-[a-zA-Z][a-zA-Z0-9]*	{return T_Identifier;}
+[a-zA-Z][a-zA-Z0-9]*  {strncpy(yylval.identifier,yytext,MaxIdentLen); if(yyleng > MaxIdentLen){ReportError::LongIdentifier(&yylloc,yytext);} return T_Identifier;}
 [0-9]+   		{yylval.integerConstant = strtol(yytext, NULL, 10); return T_IntConstant;}
 [0-9]+"u"?		{yylval.integerConstant = strtol(yytext, NULL, 10); return T_UintConstant;}
 [0-9]*"."[0-9]*"f"?	{yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
