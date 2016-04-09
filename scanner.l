@@ -77,12 +77,11 @@ BOOLEAN   (true|false)
 <COMMENT>[^*\n]*
 <COMMENT>[\n]	{currentLineNum++; BEGIN(INITIAL);}
 
-<DOT>[^a-zA-Z]			{BEGIN(INITIAL);}		
-<DOT>[a-zA-Z][a-zA-Z0-9]*	{strncpy(yylval.identifier,yytext,MaxIdentLen); if(yyleng > MaxIdentLen) {ReportError::LongIdentifier(&yylloc,yytext);} BEGIN(INITIAL); return T_FieldSelection;}
+<DOT>[a-zA-Z][a-zA-Z0-9]*	{strncpy(yylval.identifier,yytext,MaxIdentLen); if(yyleng > MaxBuffLen) {ReportError::LongIdentifier(&yylloc,yytext);} BEGIN(INITIAL); return T_FieldSelection;}
 
 
 " "     {}
-[\t]    {currentColNum += 8 - ((currentColNum-1) % 8);}
+<*>[\t]    {--currentColNum; currentColNum = (currentColNum + 7)/8 + 1;}
 
 
 [\n]		{currentLineNum++; currentColNum = 1;}
@@ -94,7 +93,7 @@ else    {return T_Else;}
 
 for     {return T_For;}
 const   {return T_Const;}
-break   {return T_Const;}
+break   {return T_Break;}
 continue  {return T_Continue;}
 do      {return T_Do;}
 return  {return T_Return;}
@@ -106,6 +105,7 @@ uniform {return T_Uniform;}
 float   {return T_Float;}
 int     {return T_Int;}
 "unsigned int" {return T_Uint;}
+uint    {return T_Uint;}
 bool    {return T_Bool;}
 in      {return T_In;}
 out     {return T_Out;}
@@ -160,10 +160,18 @@ false {yylval.boolConstant = false; return T_BoolConstant;}
 "]"	{return T_RightBracket;}
 "."	{BEGIN(DOT); return T_Dot;}
 
-[a-zA-Z][a-zA-Z0-9]*  {strncpy(yylval.identifier,yytext,MaxIdentLen); if(yyleng > MaxIdentLen){ReportError::LongIdentifier(&yylloc,yytext);} return T_Identifier;}
+
+[a-zA-Z_][a-zA-Z0-9_]*  {strncpy(yylval.identifier,yytext,MaxIdentLen); if(yyleng > MaxBuffLen){ReportError::LongIdentifier(&yylloc,yytext);} return T_Identifier;}
 [0-9]+   		{yylval.integerConstant = strtol(yytext, NULL, 10); return T_IntConstant;}
+
+[0-9]*"."?[0-9]*(E|e)("+"|"-")?[0-9]+(F|f)? {yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
+[0-9]*"."?[0-9]*(F|f)? {yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
+
+
+
 [0-9]+"u"?		{yylval.integerConstant = strtol(yytext, NULL, 10); return T_UintConstant;}
-[0-9]*"."[0-9]*"f"?	{yylval.floatConstant = strtod(yytext, NULL); return T_FloatConstant;}
+[0-9]+"U"?		{yylval.integerConstant = strtol(yytext, NULL, 10); return T_UintConstant;}
+
 
 .		{ReportError::UnrecogChar(&yylloc, *yytext);}
 

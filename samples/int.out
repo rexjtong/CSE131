@@ -1,0 +1,11 @@
+10           line 1 cols 1-2 is T_IntConstant (value = 10)
+;            line 1 cols 3-3 is T_Semicolon 
++            line 2 cols 1-1 is T_Plus 
+10           line 2 cols 2-3 is T_IntConstant (value = 10)
+;            line 2 cols 4-4 is T_Semicolon 
+-            line 3 cols 1-1 is T_Dash 
+10           line 3 cols 2-3 is T_IntConstant (value = 10)
+;            line 3 cols 4-4 is T_Semicolon 
+-            line 4 cols 1-1 is T_Dash 
+10u          line 4 cols 2-4 is T_UintConstant (value = 10)
+;            line 4 cols 5-5 is T_Semicolon 

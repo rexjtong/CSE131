@@ -1,0 +1,13 @@
+a
+A
+z
+Z
+a0
+a9
+abcdefghijklmnopqrstuvwxyzABCEDEFGHIJKLMNOPQRSTUVWYZ_0123456789
+ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz0123456789
+_0123456789_abcdefghijklmnopqrstuvwxy_ABCDEFGHIJKLMNOPQRSTUVWXYZ_
+_
+0a
+9a
+1

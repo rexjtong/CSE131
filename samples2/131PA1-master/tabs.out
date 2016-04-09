@@ -1,0 +1,4 @@
+abcd         line 1 cols 1-4 is T_Identifier 
+efgh         line 1 cols 9-12 is T_Identifier 
+abc          line 2 cols 1-3 is T_Identifier 
+defgh        line 2 cols 9-13 is T_Identifier 

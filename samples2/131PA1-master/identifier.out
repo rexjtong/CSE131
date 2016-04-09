@@ -1,0 +1,4 @@
+abc          line 1 cols 1-3 is T_Identifier 
+abc          line 2 cols 1-3 is T_Identifier 
+.            line 2 cols 4-4 is T_Dot 
+xyz          line 2 cols 5-7 is T_FieldSelection 

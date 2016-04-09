@@ -1,0 +1,37 @@
+id           line 1 cols 1-2 is T_Identifier 
+.            line 1 cols 3-3 is T_Dot 
+fieldSelector line 1 cols 4-16 is T_FieldSelection 
+id           line 1 cols 18-19 is T_Identifier 
+.            line 1 cols 20-20 is T_Dot 
+fieldSelector line 1 cols 22-34 is T_FieldSelection 
+id           line 2 cols 1-2 is T_Identifier 
+.            line 2 cols 3-3 is T_Dot 
+fieldSelector line 3 cols 9-21 is T_FieldSelection 
+id           line 6 cols 1-2 is T_Identifier 
+.            line 6 cols 3-3 is T_Dot 
+fieldSelector line 7 cols 9-21 is T_FieldSelection 
+id           line 9 cols 1-2 is T_Identifier 
+.            line 9 cols 3-3 is T_Dot 
+fieldSelector line 13 cols 9-21 is T_FieldSelection 
+NestedStruct line 16 cols 1-12 is T_Identifier 
+.            line 16 cols 13-13 is T_Dot 
+fieldA       line 16 cols 14-19 is T_FieldSelection 
+.            line 16 cols 20-20 is T_Dot 
+fieldB       line 16 cols 21-26 is T_FieldSelection 
+.            line 16 cols 27-27 is T_Dot 
+fieldC       line 16 cols 28-33 is T_FieldSelection 
+.            line 16 cols 34-34 is T_Dot 
+fieldD       line 16 cols 35-40 is T_FieldSelection 
++=           line 16 cols 42-43 is T_AddAssign 
+1U           line 16 cols 45-46 is T_UintConstant (value = 1)
+NestedStruct line 19 cols 1-12 is T_Identifier 
+.            line 19 cols 13-13 is T_Dot 
+fieldA       line 19 cols 36-41 is T_FieldSelection 
+.            line 19 cols 42-42 is T_Dot 
+fieldB       line 20 cols 25-30 is T_FieldSelection 
+.            line 21 cols 37-37 is T_Dot 
+fieldC       line 22 cols 25-30 is T_FieldSelection 
+.            line 22 cols 31-31 is T_Dot 
+fieldD       line 22 cols 32-37 is T_FieldSelection 
++=           line 22 cols 39-40 is T_AddAssign 
+1U           line 22 cols 42-43 is T_UintConstant (value = 1)

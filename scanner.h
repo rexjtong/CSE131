@@ -11,6 +11,7 @@
 #include <stdio.h>
 
 #define MaxIdentLen 31    // Maximum length for identifiers
+#define MaxBuffLen 1023   // Maximum length for ident buffer
 
   
 /* Typedef: TokenType enum

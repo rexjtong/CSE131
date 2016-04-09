@@ -1,0 +1,15 @@
+a            line 1 cols 1-1 is T_Identifier 
+A            line 2 cols 1-1 is T_Identifier 
+z            line 3 cols 1-1 is T_Identifier 
+Z            line 4 cols 1-1 is T_Identifier 
+a0           line 5 cols 1-2 is T_Identifier 
+a9           line 6 cols 1-2 is T_Identifier 
+abcdefghijklmnopqrstuvwxyzABCEDEFGHIJKLMNOPQRSTUVWYZ_0123456789 line 7 cols 1-63 is T_Identifier (truncated to abcdefghijklmnopqrstuvwxyzABCED)
+ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz0123456789 line 8 cols 1-63 is T_Identifier (truncated to ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcd)
+_0123456789_abcdefghijklmnopqrstuvwxy_ABCDEFGHIJKLMNOPQRSTUVWXYZ_ line 9 cols 1-65 is T_Identifier (truncated to _0123456789_abcdefghijklmnopqrs)
+_            line 10 cols 1-1 is T_Identifier 
+0            line 11 cols 1-1 is T_IntConstant (value = 0)
+a            line 11 cols 2-2 is T_Identifier 
+9            line 12 cols 1-1 is T_IntConstant (value = 9)
+a            line 12 cols 2-2 is T_Identifier 
+1            line 13 cols 1-1 is T_IntConstant (value = 1)
