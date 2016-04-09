@@ -59,7 +59,8 @@ int currentLineNum, currentColNum;
 
 BOOLEAN   (true|false)
 
-%x ML_COMMENT COMMENT DOT
+%s DOT
+%x ML_COMMENT COMMENT
 %%             /* BEGIN RULES SECTION */
  /* All patterns and actions should be placed between the start and stop
   * %% markers which delimit the Rules section. 
