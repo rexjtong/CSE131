@@ -69,8 +69,7 @@ BOOLEAN   (true|false)
 
 "/*"		{BEGIN(ML_COMMENT);}
 <ML_COMMENT>[\t]	{--currentColNum; currentColNum = (currentColNum+7)/8 * 8 +1;}
-<ML_COMMENT>" "		{currentColNum++;}
-<ML_COMMENT>[^*\n]*
+<ML_COMMENT>[^*\n]
 <ML_COMMENT>"*"+[^*/\n]*
 <ML_COMMENT>[\n]	{currentLineNum++; currentColNum = 1;}
 <ML_COMMENT><<EOF>>	{ReportError::UntermComment(); yyterminate();}
