@@ -66,10 +66,13 @@ BOOLEAN   (true|false)
   * %% markers which delimit the Rules section. 
   */ 
 
+
 "/*"		{BEGIN(ML_COMMENT);}
+<ML_COMMENT>[\t]	{--currentColNum; currentColNum = (currentColNum+7)/8 * 8 +1;}
+<ML_COMMENT>" "		{currentColNum++;}
 <ML_COMMENT>[^*\n]*
 <ML_COMMENT>"*"+[^*/\n]*
-<ML_COMMENT>[\n]	{currentLineNum++;}
+<ML_COMMENT>[\n]	{currentLineNum++; currentColNum = 1;}
 <ML_COMMENT><<EOF>>	{ReportError::UntermComment(); yyterminate();}
 <ML_COMMENT>"*/"	{BEGIN(INITIAL);}
 
@@ -79,10 +82,9 @@ BOOLEAN   (true|false)
 
 <DOT>[a-zA-Z][a-zA-Z0-9]*	{strncpy(yylval.identifier,yytext,MaxIdentLen); if(yyleng > MaxBuffLen) {ReportError::LongIdentifier(&yylloc,yytext);} BEGIN(INITIAL); return T_FieldSelection;}
 
+[\t]    {--currentColNum; currentColNum = (currentColNum+7)/8 * 8 +1;}
 
 " "     {}
-<*>[\t]    {--currentColNum; currentColNum = (currentColNum + 7)/8 + 1;}
-
 
 [\n]		{currentLineNum++; currentColNum = 1;}
 

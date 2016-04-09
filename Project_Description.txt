@@ -1,0 +1,5 @@
+When approaching this project we tried to represent each rule as a regular expression.
+We tackled the keywords first as these seemed like the most simple problems to solve,
+then moved on to developing regular expressions for other things such as floats identifiers and ints.
+We created state conditions to handle comments.
+Lastly, we handled the error cases.
