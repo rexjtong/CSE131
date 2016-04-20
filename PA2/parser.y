@@ -346,6 +346,7 @@ for_init_statement	:	expression_statement
 			|	declaration_statement
 			;
 conditionopt		:	condition
+			|	/* empty */
 			;
 for_rest_statement	:	conditionopt T_Semicolon
 			|	conditionopt T_Semicolon expression
