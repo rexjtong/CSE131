@@ -45,6 +45,7 @@ void yyerror(const char *msg); // standard error-handling routine
     char identifier[MaxIdentLen+1]; // +1 for terminating null
     Decl *decl;
     List<Decl*> *declList;
+    FnDecl *functionDeclaration;
 }
 
 
@@ -87,8 +88,12 @@ void yyerror(const char *msg); // standard error-handling routine
  */
 %type <declList>  DeclList
 %type <decl>      Decl
+%type <decl>      declaration
+%type <functionDeclaration>   function_definition
 
-
+/* Precedences */
+%nonassoc "then"
+%nonassoc T_Else
 
 %%
 /* Rules
@@ -108,30 +113,36 @@ Program   :    DeclList            {
                                           program->Print(0);
                                     }
           ;
+/*translation_unit	:	Decl
+*			|	translation_unit Decl
+			;*/
+
 
 DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
           |    Decl                 { ($$ = new List<Decl*>)->Append($1); }
           ;
 
-Decl      :    T_Int T_Identifier T_Semicolon {
-                                                 // replace it with your implementation
-                                                 Identifier *id = new Identifier(@2, $2);
-                                                 $$ = new VarDecl(id, Type::intType);
-                                              }
-	  |    T_Void T_Identifier T_Semicolon {
-						  Identifier *id = new Identifier(@2, $2);
-						  $$ = new VarDecl(id, Type::voidType);
-					       }
-	  |    T_Float T_Identifier T_Semicolon {
-						  Identifier *id = new Identifier(@2, $2);
-						  $$ = new VarDecl(id, Type::floatType);
-					       }
-	  |    T_Bool T_Identifier T_Semicolon {
-						  Identifier *id = new Identifier(@2, $2);
-						  $$ = new VarDecl(id, Type::boolType);
-					       }
-          ;
-
+/*Decl      :    T_Int T_Identifier T_Semicolon {
+*                                                 // replace it with your implementation
+*                                                 Identifier *id = new Identifier(@2, $2);
+*                                                 $$ = new VarDecl(id, Type::intType);
+*                                              }
+*	  |    T_Void T_Identifier T_Semicolon {
+*						  Identifier *id = new Identifier(@2, $2);
+*						  $$ = new VarDecl(id, Type::voidType);
+*					       }
+*	  |    T_Float T_Identifier T_Semicolon {
+*						  Identifier *id = new Identifier(@2, $2);
+*						  $$ = new VarDecl(id, Type::floatType);
+*					       }
+*	  |    T_Bool T_Identifier T_Semicolon {
+*						  Identifier *id = new Identifier(@2, $2);
+*						  $$ = new VarDecl(id, Type::boolType);
+*					       }
+          ;*/
+Decl	:	function_definition	{$$=$1;}
+	|	declaration		{$$=$1;}
+	;
 variable_identifier	:	T_Identifier
 			;
 primary_expression	:	variable_identifier
@@ -160,7 +171,7 @@ function_call_header_no_parameters	:	function_call_header T_Void
 					|	function_call_header
 					;
 function_call_header_with_parameters	:	function_call_header assignment_expression
-					|	function_call_header_with_parameters T_Comma assignment expression
+					|	function_call_header_with_parameters T_Comma assignment_expression
 					;
 function_call_header	:	function_identifier T_LeftParen
 			;
@@ -225,9 +236,9 @@ expression		:	assignment_expression
 			;
 constant_expression	:	conditional_expression
 			;
-declaration		:	function_prototype T_Semicolon
-			|	init_declarator T_Semicolon
-			|	type_qualifier T_Identifier T_Semicolon
+declaration		:	function_prototype T_Semicolon		
+			|	init_declarator_list T_Semicolon	
+			|	type_qualifier T_Identifier T_Semicolon	
 			;
 function_prototype	:	function_declarator T_RightParen
 			;
@@ -295,14 +306,17 @@ initializer		:	assignment_expression
 			;
 declaration_statement	:	declaration
 			;
-statement		:	compound_statement_with_scope
+statement		:	compound_statement
 			|	simple_statement
 			;
-statement_no_new_scope	:	compound_statement_no_new_scope
-			|	simple_statement
-			;
-statement_with_scope	:	compound_statement_no_new_scope
-			|	simple_statement
+/*statement_no_new_scope	:	compound_statement_no_new_scope
+*			|	simple_statement
+*			;
+*statement_with_scope	:	compound_statement_no_new_scope
+*			|	simple_statement
+*			;*/
+statement_scope		:	compound_statement
+		 	|	simple_statement
 			;
 simple_statement	:	declaration_statement
 			|	expression_statement
@@ -312,10 +326,13 @@ simple_statement	:	declaration_statement
 			|	iteration_statement
 			|	jump_statement
 			;
-compound_statement_with_scope	:	T_LeftBrace T_RightBrace
-				|	T_LeftBrace statement_list T_RightBrace
-				;
-compound_statement_no_new_scope	:	T_LeftBrace T_RightBrace
+/*compound_statement_with_scope	:	T_LeftBrace T_RightBrace
+*				|	T_LeftBrace statement_list T_RightBrace
+*				;
+*compound_statement_no_new_scope	:	T_LeftBrace T_RightBrace
+*				|	T_LeftBrace statement_list T_RightBrace
+*				;*/
+compound_statement		:	T_LeftBrace T_RightBrace
 				|	T_LeftBrace statement_list T_RightBrace
 				;
 statement_list		:	statement
@@ -324,13 +341,17 @@ statement_list		:	statement
 expression_statement	:	T_Semicolon
 			|	expression T_Semicolon
 			;
-selection_statement	:	T_If T_LeftParen expression T_RightParen selection_rest_statement
+/*selection_statement	:	T_If T_LeftParen expression T_RightParen selection_rest_statement
+*			;
+*selection_rest_statement	:	statement_scope T_Else statement_scope
+*				|	statement_scope
+*				;*/
+selection_statement	:	T_If T_LeftParen expression T_RightParen statement_scope T_Else statement_scope
+			|	T_If T_LeftParen expression T_RightParen statement_scope %prec "then"
 			;
-selection_rest_statement	:	statement_withscope T_Else statement_with_scope
-				|	statement_with_scope
-				;
 condition		:	expression
 			|	fully_specified_type T_Identifier T_Equal initializer
+			;
 switch_statement	:	T_Switch T_LeftParen expression T_RightParen T_LeftBrace switch_statement_list T_RightBrace
 			;
 switch_statement_list	:	statement_list
@@ -338,9 +359,9 @@ switch_statement_list	:	statement_list
 case_label		:	T_Case expression T_Colon
 			|	T_Default T_Colon
 			;
-iteration_statement	:	T_While T_LeftParen condition T_RightParen statement_no_new_scope
-			|	T_Do statement_with_scope T_While T_LeftParen expression T_RightParen T_Semicolon
-			|	T_For T_LeftParen for_init_statement for_rest_statement T_RightParen statement_no_new_scope
+iteration_statement	:	T_While T_LeftParen condition T_RightParen statement_scope
+			|	T_Do statement_scope T_While T_LeftParen expression T_RightParen T_Semicolon
+			|	T_For T_LeftParen for_init_statement for_rest_statement T_RightParen statement_scope
 			;
 for_init_statement	:	expression_statement
 			|	declaration_statement
@@ -356,13 +377,7 @@ jump_statement		:	T_Continue T_Semicolon
 			|	T_Return T_Semicolon
 			|	T_Return expression T_Semicolon
 			;
-translation_unit	:	external_declaration
-			|	translation_unit external_declaration
-			;
-external_declaration	:	function_definition
-			|	declaration
-			;
-function_definition	:	function_prototype compound_statement_no_new_scope
+function_definition	:	function_prototype compound_statement	
 			;
 
 %%
