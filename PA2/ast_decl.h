@@ -23,22 +23,23 @@ void yyerror(const char *msg);
 
 class Decl : public Node
 {
-  protected:
-    Identifier *id;
+//  protected:
+
 
   public:
+    Identifier *id;
     Decl() : id(NULL) {}
     Decl(Identifier *name);
 };
 
 class VarDecl : public Decl
 {
-  protected:
+//  protected:
+
+  public:
     Type *type;
     TypeQualifier *typeq;
     Expr *assignTo;
-
-  public:
     VarDecl() : type(NULL), typeq(NULL), assignTo(NULL) {}
     VarDecl(Identifier *name, Type *type, Expr *assignTo = NULL);
     VarDecl(Identifier *name, TypeQualifier *typeq, Expr *assignTo = NULL);
@@ -56,13 +57,13 @@ class VarDeclError : public VarDecl
 
 class FnDecl : public Decl
 {
-  protected:
+//  protected:
+
+  public:
     List<VarDecl*> *formals;
     Type *returnType;
     TypeQualifier *returnTypeq;
     Stmt *body;
-
-  public:
     FnDecl() : Decl(), formals(NULL), returnType(NULL), returnTypeq(NULL), body(NULL) {}
     FnDecl(Identifier *name, Type *returnType, List<VarDecl*> *formals);
     FnDecl(Identifier *name, Type *returnType, TypeQualifier *returnTypeq, List<VarDecl*> *formals);
