@@ -46,6 +46,8 @@ void yyerror(const char *msg); // standard error-handling routine
     Decl *decl;
     List<Decl*> *declList;
     FnDecl *functionDeclaration;
+    VarExpr *varExpr;
+    Type *type;
 }
 
 
@@ -90,6 +92,8 @@ void yyerror(const char *msg); // standard error-handling routine
 %type <decl>      Decl
 %type <decl>      declaration
 %type <functionDeclaration>   function_definition
+%type <varExpr>   variable_identifier
+%type <type>      type_specifier_nonarray
 
 /* Precedences */
 %nonassoc "then"
@@ -113,10 +117,6 @@ Program   :    DeclList            {
                                           program->Print(0);
                                     }
           ;
-/*translation_unit	:	Decl
-*			|	translation_unit Decl
-			;*/
-
 
 DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
           |    Decl                 { ($$ = new List<Decl*>)->Append($1); }
@@ -143,7 +143,30 @@ DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
 Decl	:	function_definition	{$$=$1;}
 	|	declaration		{$$=$1;}
 	;
-variable_identifier	:	T_Identifier
+type_specifier_nonarray	:	T_Int	{ Type::intType; }
+			|	T_Float	{ Type::floatType; }
+			|	T_Void	{ Type::voidType; }
+			|	T_Bool	{ Type::boolType; }
+			|	T_Mat2	{ Type::mat2Type; }
+			|	T_Mat3	{ Type::mat3Type; }
+			|	T_Mat4	{ Type::mat4Type; }
+			|	T_Vec2	{ Type::vec2Type; }
+			|	T_Vec3	{ Type::vec3Type; }
+			|	T_Vec4	{ Type::vec4Type; }
+			|	T_Ivec2	{ Type::ivec2Type; }
+			|	T_Ivec3	{ Type::ivec3Type; }
+			|	T_Ivec4	{ Type::ivec4Type; }
+			|	T_Bvec2	{ Type::bvec2Type; }
+			|	T_Bvec3	{ Type::bvec3Type; }
+			|	T_Bvec4	{ Type::bvec4Type; }
+			|	T_Uvec2	{ Type::uvec2Type; }
+			|	T_Uvec3	{ Type::uvec3Type; }
+			|	T_Uvec4	{ Type::uvec4Type; }
+			;
+variable_identifier	:	T_Identifier	{
+						 Identifier *id = new Identifier(@1, $1);
+						 $$ = new VarExpr(@1, id);
+						}
 			;
 primary_expression	:	variable_identifier
 			|	T_IntConstant
@@ -160,11 +183,7 @@ postfix_expression	:	primary_expression
 			;
 integer_expression	:	expression
 			;
-function_call		:	function_call_or_method
-			;
-function_call_or_method	:	function_call_generic
-			;
-function_call_generic	:	function_call_header_with_parameters T_RightParen
+function_call		:	function_call_header_with_parameters T_RightParen
 			|	function_call_header_no_parameters T_RightParen
 			;
 function_call_header_no_parameters	:	function_call_header T_Void
@@ -238,7 +257,7 @@ constant_expression	:	conditional_expression
 			;
 declaration		:	function_prototype T_Semicolon		
 			|	init_declarator_list T_Semicolon	
-			|	type_qualifier T_Identifier T_Semicolon	
+			|	type_qualifier T_Identifier T_Semicolon
 			;
 function_prototype	:	function_declarator T_RightParen
 			;
@@ -282,26 +301,26 @@ type_specifier		:	type_specifier_nonarray
 			;
 array_specifier		:	T_LeftBracket constant_expression T_RightBracket
 			;
-type_specifier_nonarray	:	T_Void
-			|	T_Float
-			|	T_Int
-			|	T_Bool
-			|	T_Vec2
-			|	T_Vec3
-			|	T_Vec4
-			|	T_Bvec2
-			|	T_Bvec3
-			|	T_Bvec4
-			|	T_Ivec2
-			|	T_Ivec3
-			|	T_Ivec4
-			|	T_Uvec2
-			|	T_Uvec3
-			|	T_Uvec4
-			|	T_Mat2
-			|	T_Mat3
-			|	T_Mat4
-			;
+/*type_specifier_nonarray	:	T_Void
+*			|	T_Float
+*			|	T_Int
+*			|	T_Bool
+*			|	T_Vec2
+*			|	T_Vec3
+*			|	T_Vec4
+*			|	T_Bvec2
+*			|	T_Bvec3
+*			|	T_Bvec4
+*			|	T_Ivec2
+*			|	T_Ivec3
+*			|	T_Ivec4
+*			|	T_Uvec2
+*			|	T_Uvec3
+*			|	T_Uvec4
+*			|	T_Mat2
+*			|	T_Mat3
+*			|	T_Mat4
+*			;*/
 initializer		:	assignment_expression
 			;
 declaration_statement	:	declaration
