@@ -24,6 +24,15 @@ void yyerror(const char *msg); // standard error-handling routine
 
 %}
 
+%code requires {
+	struct QualSpec {
+		Type *obj;
+		TypeQualifier *qual;
+	};
+}
+
+
+
 /* The section before the first %% is the Definitions section of the yacc
  * input file. Here is where you declare tokens and types, add precedence
  * and associativity options, and so on.
@@ -48,6 +57,11 @@ void yyerror(const char *msg); // standard error-handling routine
     FnDecl *functionDeclaration;
     VarExpr *varExpr;
     Type *type;
+    VarDecl *varDecl;
+    Operator *operater;
+    Expr *expr;
+    QualSpec *qualspec;
+    TypeQualifier *typequal;
 }
 
 
@@ -92,9 +106,37 @@ void yyerror(const char *msg); // standard error-handling routine
 %type <decl>      Decl
 %type <decl>      declaration
 %type <functionDeclaration>   function_definition
-%type <varExpr>   variable_identifier
 %type <type>      type_specifier_nonarray
-
+%type <type>	  type_specifier
+%type <typequal>	  type_qualifier
+%type <qualspec>	  fully_specified_type
+%type <functionDeclaration>   function_header
+%type <functionDeclaration>   function_header_with_parameters
+%type <functionDeclaration>   function_declarator
+//%type <varDecl>	  parameter_declarator
+//%type <varDecl>	  parameter_declaration
+%type	<operater>	  unary_operator
+%type	<operater>	  assignment_operator
+%type	<expr>		  primary_expression
+%type	<expr>		  expression
+%type	<expr>		  postfix_expression
+%type	<expr>		  integer_expression
+%type	<expr>		  assignment_expression
+%type	<expr>		  unary_expression
+%type	<expr>		  multiplicative_expression
+%type	<expr>		  additive_expression
+%type	<expr>		  shift_expression
+%type	<expr>		  relational_expression
+%type	<expr>		  equality_expression
+%type	<expr>		  and_expression
+%type	<expr>		  exclusive_or_expression
+%type	<expr>		  inclusive_or_expression
+%type	<expr>		  logical_or_expression
+%type	<expr>		  logical_and_expression
+%type	<expr>		  logical_xor_expression
+%type	<expr>		  conditional_expression
+%type	<expr>		  constant_expression
+%type	<varDecl>	  single_declaration
 /* Precedences */
 %nonassoc "then"
 %nonassoc T_Else
@@ -107,7 +149,6 @@ void yyerror(const char *msg); // standard error-handling routine
 
  */
 Program   :    DeclList            {
-                                      @1;
                                       /* pp2: The @1 is needed to convince
                                        * yacc to set up yylloc. You can remove
                                        * it once you have other uses of @n*/
@@ -143,39 +184,37 @@ DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
 Decl	:	function_definition	{$$=$1;}
 	|	declaration		{$$=$1;}
 	;
-type_specifier_nonarray	:	T_Int	{ Type::intType; }
-			|	T_Float	{ Type::floatType; }
-			|	T_Void	{ Type::voidType; }
-			|	T_Bool	{ Type::boolType; }
-			|	T_Mat2	{ Type::mat2Type; }
-			|	T_Mat3	{ Type::mat3Type; }
-			|	T_Mat4	{ Type::mat4Type; }
-			|	T_Vec2	{ Type::vec2Type; }
-			|	T_Vec3	{ Type::vec3Type; }
-			|	T_Vec4	{ Type::vec4Type; }
-			|	T_Ivec2	{ Type::ivec2Type; }
-			|	T_Ivec3	{ Type::ivec3Type; }
-			|	T_Ivec4	{ Type::ivec4Type; }
-			|	T_Bvec2	{ Type::bvec2Type; }
-			|	T_Bvec3	{ Type::bvec3Type; }
-			|	T_Bvec4	{ Type::bvec4Type; }
-			|	T_Uvec2	{ Type::uvec2Type; }
-			|	T_Uvec3	{ Type::uvec3Type; }
-			|	T_Uvec4	{ Type::uvec4Type; }
+type_specifier_nonarray	:	T_Int	{ $$ = Type::intType; }
+			|	T_Float	{ $$ = Type::floatType; }
+			|	T_Void	{ $$ = Type::voidType; }
+			|	T_Bool	{ $$ = Type::boolType; }
+			|	T_Mat2	{ $$ = Type::mat2Type; }
+			|	T_Mat3	{ $$ = Type::mat3Type; }
+			|	T_Mat4	{ $$ = Type::mat4Type; }
+			|	T_Vec2	{ $$ = Type::vec2Type; }
+			|	T_Vec3	{ $$ = Type::vec3Type; }
+			|	T_Vec4	{ $$ = Type::vec4Type; }
+			|	T_Ivec2	{ $$ = Type::ivec2Type; }
+			|	T_Ivec3	{ $$ = Type::ivec3Type; }
+			|	T_Ivec4	{ $$ = Type::ivec4Type; }
+			|	T_Bvec2	{ $$ = Type::bvec2Type; }
+			|	T_Bvec3	{ $$ = Type::bvec3Type; }
+			|	T_Bvec4	{ $$ = Type::bvec4Type; }
+			|	T_Uvec2	{ $$ = Type::uvec2Type; }
+			|	T_Uvec3	{ $$ = Type::uvec3Type; }
+			|	T_Uvec4	{ $$ = Type::uvec4Type; }
 			;
-variable_identifier	:	T_Identifier	{
-						 Identifier *id = new Identifier(@1, $1);
-						 $$ = new VarExpr(@1, id);
-						}
+primary_expression	:	T_Identifier		{
+		   					 Identifier *id = new Identifier(@1, $1);
+							 $$ = new VarExpr(@1, id);
+							}
+			|	T_IntConstant		{$$ = new IntConstant(@1, $1);}
+			|	T_FloatConstant		{$$ = new FloatConstant(@1, $1);}
+			|	T_BoolConstant		{$$ = new FloatConstant(@1, $1);}
+			|	T_LeftParen expression T_RightParen	{$$ = $2;}
 			;
-primary_expression	:	variable_identifier
-			|	T_IntConstant
-			|	T_FloatConstant
-			|	T_BoolConstant
-			|	T_LeftParen expression T_RightParen
-			;
-postfix_expression	:	primary_expression
-			|	postfix_expression T_LeftBracket integer_expression T_RightBracket
+postfix_expression	:	primary_expression	{$$ = $1;}
+			|	postfix_expression T_LeftBracket integer_expression T_RightBracket 
 			|	function_call
 			|	postfix_expression T_Dot T_Identifier
 			|	postfix_expression T_Inc
@@ -202,8 +241,8 @@ unary_expression	:	postfix_expression
 			|	T_Dec unary_expression
 			|	unary_operator unary_expression
 			;
-unary_operator		:	T_Plus
-			|	T_Dash
+unary_operator		:	T_Plus	{$$ = new Operator(@1, "+");}
+			|	T_Dash	{$$ = new Operator(@1, "-");}
 			;
 multiplicative_expression	:	unary_expression
 				|	multiplicative_expression T_Star unary_expression
@@ -245,46 +284,87 @@ conditional_expression	:	logical_or_expression
 assignment_expression	:	conditional_expression
 			|	unary_expression assignment_operator assignment_expression
 			;
-assignment_operator	:	T_Equal
-			|	T_MulAssign
-			|	T_DivAssign
-			|	T_AddAssign
-			|	T_SubAssign
+assignment_operator	:	T_Equal		{$$ = new Operator(@1, "=");}
+			|	T_MulAssign	{$$ = new Operator(@1, "*=");}
+			|	T_DivAssign	{$$ = new Operator(@1, "/=");}
+			|	T_AddAssign	{$$ = new Operator(@1, "+=");}
+			|	T_SubAssign	{$$ = new Operator(@1, "-=");}
 			;
 expression		:	assignment_expression
 			;
 constant_expression	:	conditional_expression
 			;
-declaration		:	function_prototype T_Semicolon		
-			|	init_declarator_list T_Semicolon	
-			|	type_qualifier T_Identifier T_Semicolon
+declaration		:	function_prototype T_Semicolon			{
+										 
+										}
+			|	single_declaration T_Semicolon			{
+										 $$ = $1; 
+										}
+			|	type_qualifier T_Identifier T_Semicolon	
 			;
-function_prototype	:	function_declarator T_RightParen
+function_prototype	:	function_declarator T_RightParen		{
+										 
+										}
 			;
-function_declarator	:	function_header
-			|	function_header_with_parameters
+function_declarator	:	function_header					{$$=$1;}
+			|	function_header_with_parameters			{$$=$1;}
 			;
-function_header_with_parameters	:	function_header parameter_declaration
-				|	function_header_with_parameters T_Comma	parameter_declaration
+function_header_with_parameters	:	fully_specified_type T_Identifier T_LeftParen type_specifier T_Identifier	{
+											 Identifier *id = new Identifier(@5,$5);
+											 Identifier *id2 = new Identifier(@2,$2);
+											 List<VarDecl*> *list = new List<VarDecl*>();
+											 list->Append(new VarDecl(id,$4));
+										 	 $$ = new FnDecl(id2, $1->obj, list);
+											}
+				|	function_header_with_parameters T_Comma	type_specifier T_Identifier		{
+											Identifier *id2 = new Identifier(@4, $4);
+											List<VarDecl*> *list = $1->formals;
+											list->Append(new VarDecl(id2,$3));
+											$$ = new FnDecl($1->id,$1->returnType,list);
+										}
+				|	function_header_with_parameters T_Comma type_specifier				{
+											List<VarDecl*> *list = $1->formals;
+											list->Append(new VarDecl(NULL,$3));
+											$$ = new FnDecl($1->id,$1->returnType,list);
+										}
 				;
-function_header		:	fully_specified_type T_Identifier T_LeftParen
+function_header		:	fully_specified_type T_Identifier T_LeftParen	{
+										 Identifier *id = new Identifier(@2,$2);
+										 $$ = new FnDecl(id, $1->obj, new List<VarDecl*>());
+										}
 			;
-parameter_declarator	:	type_specifier T_Identifier
+/*parameter_declarator	:	type_specifier T_Identifier			{
+*		     								 Identifier *id = new Identifier(@2, $2);
+*										 $$ = new VarDecl(id, $1);
+*										}
 			;
-parameter_declaration	:	parameter_declarator
-			|	parameter_type_specifier
-			;
-parameter_type_specifier	:	type_specifier
-				;
-init_declarator_list	:	single_declaration
-			;
-single_declaration	:	fully_specified_type
-			|	fully_specified_type T_Identifier
+*parameter_declaration	:	parameter_declarator				{$$=$1;}
+			|	type_specifier					{$$ = new VarDecl(NULL,$1);}
+			;*/
+single_declaration	:	fully_specified_type T_Identifier		{
+		   								 Identifier *id = new Identifier(@2,$2);
+										 if($1->qual == NULL) {
+										 	$$ = new VarDecl(id, $1->obj);	
+										 }
+										 else {
+											$$ = new VarDecl(id, $1->obj, $1->qual);
+										 }
+		   								}
 			|	fully_specified_type T_Identifier array_specifier
-			|	fully_specified_type T_Identifier T_Equal initializer
+			|	fully_specified_type T_Identifier T_Equal assignment_expression
 			;
-fully_specified_type	:	type_specifier
-			|	type_qualifier type_specifier
+fully_specified_type	:	type_specifier					{
+		     								 QualSpec *a = new QualSpec();
+										 a->obj = $1;
+										 a->qual = NULL;
+										 $$ = a;
+										} 
+			|	type_qualifier type_specifier			{
+		     								 QualSpec *a = new QualSpec();
+										 a->obj = $2;
+										 a->qual = $1;
+										 $$ = a;
+										}
 			;
 type_qualifier		:	single_type_qualifier
 			|	type_qualifier single_type_qualifier
@@ -296,7 +376,7 @@ storage_qualifier	:	T_Const
 			|	T_Out
 			|	T_Uniform
 			;
-type_specifier		:	type_specifier_nonarray
+type_specifier		:	type_specifier_nonarray				{$$=$1;}
 			|	type_specifier_nonarray array_specifier
 			;
 array_specifier		:	T_LeftBracket constant_expression T_RightBracket
@@ -321,8 +401,6 @@ array_specifier		:	T_LeftBracket constant_expression T_RightBracket
 *			|	T_Mat3
 *			|	T_Mat4
 *			;*/
-initializer		:	assignment_expression
-			;
 declaration_statement	:	declaration
 			;
 statement		:	compound_statement
@@ -340,7 +418,6 @@ statement_scope		:	compound_statement
 simple_statement	:	declaration_statement
 			|	expression_statement
 			|	selection_statement
-			|	switch_statement
 			|	case_label
 			|	iteration_statement
 			|	jump_statement
@@ -369,11 +446,7 @@ selection_statement	:	T_If T_LeftParen expression T_RightParen statement_scope T
 			|	T_If T_LeftParen expression T_RightParen statement_scope %prec "then"
 			;
 condition		:	expression
-			|	fully_specified_type T_Identifier T_Equal initializer
-			;
-switch_statement	:	T_Switch T_LeftParen expression T_RightParen T_LeftBrace switch_statement_list T_RightBrace
-			;
-switch_statement_list	:	statement_list
+			|	fully_specified_type T_Identifier T_Equal assignment_expression
 			;
 case_label		:	T_Case expression T_Colon
 			|	T_Default T_Colon
@@ -385,11 +458,8 @@ iteration_statement	:	T_While T_LeftParen condition T_RightParen statement_scope
 for_init_statement	:	expression_statement
 			|	declaration_statement
 			;
-conditionopt		:	condition
-			|	/* empty */
-			;
-for_rest_statement	:	conditionopt T_Semicolon
-			|	conditionopt T_Semicolon expression
+for_rest_statement	:	condition T_Semicolon
+			|	condition T_Semicolon expression
 			;
 jump_statement		:	T_Continue T_Semicolon
 			|	T_Break T_Semicolon
@@ -400,8 +470,6 @@ function_definition	:	function_prototype compound_statement
 			;
 
 %%
-/* SOmething is weird with switch_statement_list!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-
 /* T_FieldSlection can use T_Identifier as a substitute and T_Uint and T_UintConstant
  * will not be test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * !!!!!!!!!!!!!!!!!!!!!!! read this!!!!!!!!!!!!
