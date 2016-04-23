@@ -1,0 +1,8 @@
+To start off the project we wrote all of the grammar rules in the GLSL specifications that were highlighted into parser.y. 
+Many of these rules were redundant or could be simplified. 
+After completing the grammar and making sure that it could compile we gradually started adding actions to the production rules. 
+We would test after adding each rule. 
+We had trouble with arrays and function calls in general.
+Ultimately, we tried to simplify as many of the rules as possible before creating actions. We also read through each of the .h files
+and Piazza (extensively) in order to determine which types we should classify various objects in the actions for each rules.
+We tested primarily using gdb and print statements.
