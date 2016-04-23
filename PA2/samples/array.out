@@ -1,0 +1,29 @@
+
+   Program: 
+  2   FnDecl: 
+         (return type) Type: int
+  2      Identifier: foo
+         (body) StmtBlock: 
+  3         VarDecl: 
+  3            ArrayType: 
+                  Type: int
+  3            Identifier: a
+  5         AssignExpr: 
+  5            ArrayAccess: 
+  5               VarExpr: 
+  5                  Identifier: a
+  5               (subscript) IntConstant: 0
+  5            Operator: =
+  5            BoolConstant: true
+  6         AssignExpr: 
+  6            ArrayAccess: 
+  6               VarExpr: 
+  6                  Identifier: a
+  6               (subscript) IntConstant: 1
+  6            Operator: =
+  6            FloatConstant: 2.5
+  8         ReturnStmt: 
+  8            ArrayAccess: 
+  8               VarExpr: 
+  8                  Identifier: a
+  8               (subscript) IntConstant: 0

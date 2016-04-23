@@ -224,7 +224,7 @@ primary_expression	:	T_Identifier		{
 			|	T_LeftParen expression T_RightParen	{$$ = $2;}
 			;
 postfix_expression	:	primary_expression	{$$ = $1;}
-			|	postfix_expression T_LeftBracket integer_expression T_RightBracket 	{$$ = new ArrayAccess(@1,$1,$3);}
+			|	postfix_expression T_LeftBracket integer_expression T_RightBracket 	{$$ = new ArrayAccess(@3,$1,$3);}
 			|	function_call		{$$ = $1;}
 			|	postfix_expression T_Dot T_Identifier	{$$ = new FieldAccess($1, new Identifier(@3,$3));}
 			|	postfix_expression T_Inc	{
@@ -245,10 +245,10 @@ function_call_header_no_parameters	:	function_call_header T_Void	{$$=$1;}
 function_call_header_with_parameters	:	function_call_header assignment_expression
 					|	function_call_header_with_parameters T_Comma assignment_expression
 					;
-function_call_header	:	function_identifier T_LeftParen			//{$$ = new Call(NULL, new Identifier(@1,$1), new List<Expr*>());}
+function_call_header	:	function_identifier T_LeftParen			{}//{$$ = new Call(NULL, new Identifier(@1,$1), new List<Expr*>());}
 			;
 function_identifier	:	type_specifier					{$$=$1;}
-			|	T_Identifier				
+			|	T_Identifier					{}
 			;
 unary_expression	:	postfix_expression			{$$=$1;}
 			|	T_Inc unary_expression			{
@@ -427,9 +427,9 @@ type_qualifier		:	T_Const		{ $$ = TypeQualifier::constTypeQualifier; }
 type_specifier		:	type_specifier_nonarray				{$$=$1;}
 			|	type_specifier_nonarray array_specifier		{$$ = new ArrayType(@1,$1);} 
 			;
-array_specifier		:	T_LeftBracket constant_expression T_RightBracket	//{$$ = new ArrayType(@2,$2);}
+array_specifier		:	T_LeftBracket constant_expression T_RightBracket	{}
 			;
-declaration_statement	:	declaration
+declaration_statement	:	declaration		{}
 			;
 statement		:	compound_statement	{$$=$1;}
 			|	simple_statement	{$$=$1;}
@@ -452,6 +452,7 @@ statement_list		:	statement		{
 							 list->varDeclList = new List<VarDecl*>();
 							 list->stmtList = new List<Stmt*>();
 							 $$ = list;
+							 list->stmtList->Append($1);
 							}
 			|	statement_list statement	{
 								 $$ = $1;
