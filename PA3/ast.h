@@ -38,6 +38,9 @@
 #define _H_ast
 
 #include <stdlib.h>   // for NULL
+#include <vector>
+#include <map>
+//#include "ast_decl.h"
 #include "location.h"
 #include <iostream>
 
@@ -46,6 +49,10 @@ using namespace std;
 class SymbolTable;
 class MyStack;
 class FnDecl;
+//class Decl;
+
+//static vector< map < string, Decl* > > *symbolTable = new vector< map < string, Decl* > >();
+
 
 class Node  {
   protected:
