@@ -1,0 +1,6 @@
+
+*** Error line 7.
+	continue;
+                ^
+*** continue is only allowed inside a loop
+

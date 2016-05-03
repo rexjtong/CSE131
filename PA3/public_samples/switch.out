@@ -1,0 +1,6 @@
+
+*** Error line 5.
+   switch( x + 1.0 ) {
+                   ^
+*** Incompatible operands: int + float
+

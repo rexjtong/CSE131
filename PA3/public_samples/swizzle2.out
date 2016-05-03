@@ -1,0 +1,6 @@
+
+*** Error line 6.
+	abc.ww;
+            ^^
+*** VarExpr swizzle 'ww' exceeds its vector component
+

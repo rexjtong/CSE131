@@ -1,0 +1,36 @@
+
+*** Error line 4.
+	abc.def;
+            ^^^
+*** VarExpr swizzle 'def' is not proper subset of [xyzw]
+
+
+*** Error line 5.
+	abc.de;
+            ^^
+*** VarExpr swizzle 'de' is not proper subset of [xyzw]
+
+
+*** Error line 6.
+	abc.xyz;
+            ^^^
+*** VarExpr swizzle 'xyz' exceeds its vector component
+
+
+*** Error line 8.
+	abc.zz;
+            ^^
+*** VarExpr swizzle 'zz' exceeds its vector component
+
+
+*** Error line 9.
+	abc.xxyyxyxy;
+            ^^^^^^^^
+*** VarExpr swizzle 'xxyyxyxy' generates a vector longer than vec4
+
+
+*** Error line 10.
+	d.x;	
+          ^
+*** VarExpr non-vector type can't have swizzle 'x'
+

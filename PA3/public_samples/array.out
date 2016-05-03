@@ -1,0 +1,6 @@
+
+*** Error line 5.
+  int z = x[0] + y[2];
+                     ^
+*** Incompatible operands: int + float
+

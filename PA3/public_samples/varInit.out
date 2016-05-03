@@ -1,0 +1,6 @@
+
+*** Error line 6.
+  int x = y + 2.0;
+                 ^
+*** Wrong initialization of identifier 'x': idType 'int' exprType 'float'
+
