@@ -28,9 +28,9 @@ void yyerror(const char *msg);
 class Decl : public Node 
 {
   protected:
-    Identifier *id;
   
   public:
+    Identifier *id;
     Decl() : id(NULL) {}
     Decl(Identifier *name);
     Identifier *GetIdentifier() const { return id; }

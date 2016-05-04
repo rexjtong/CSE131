@@ -17,19 +17,22 @@
 using namespace std;
 
 
-static vector< map < string, Decl* > > *symbolTable = new vector< map < string, Decl* > >();
 
 class SymbolTable {
 
+
 	public:	
-		int currentScope;
 
-		SymbolTable() : currentScope(-1) {}
+	vector< map < string, Decl* > > *symbolTable; //= new vector< map < string, Decl* > >();
+	int currentScope;
 
-		void push_scope();
-		void pop_scope();
-		bool add_decl(string ident, Decl* dec);
-		Decl* search_scope(string ident);
+	SymbolTable() : currentScope(-1) {symbolTable = new vector< map < string, Decl* > >();}
+
+	void push_scope();
+	void pop_scope();
+	bool add_decl(string ident, Decl* dec);
+	bool add_decl(string ident, FnDecl* fndec);
+	Decl* search_scope(string ident);
 
 
 };

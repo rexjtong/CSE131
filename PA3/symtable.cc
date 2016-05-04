@@ -29,6 +29,11 @@ bool SymbolTable::add_decl(string ident, Decl* dec) {
 	}
 }
 
+bool SymbolTable::add_decl(string ident, FnDecl* fndec) {
+	symbolTable->at(currentScope).insert(pair<string, Decl*>(ident, fndec));
+	return true;
+}
+
 Decl* SymbolTable::search_scope(string ident) {
 
 	for(int i = currentScope; i >= 0; i--) {

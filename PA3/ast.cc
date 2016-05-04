@@ -27,6 +27,11 @@ Node::Node() {
  * virtual function PrintChildren which is expected to print the
  * internals of the node (itself & children) as appropriate.
  */
+
+
+SymbolTable *Node::symtab = new SymbolTable();
+
+
 void Node::Print(int indentLevel, const char *label) { 
     const int numSpaces = 3;
     printf("\n");

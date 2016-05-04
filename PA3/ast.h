@@ -32,7 +32,7 @@
  * parse tree, and when visiting each node, verify the particular
  * semantic rules that apply to that construct.
 
- */
+*/
 
 #ifndef _H_ast
 #define _H_ast
@@ -43,10 +43,14 @@
 //#include "ast_decl.h"
 #include "location.h"
 #include <iostream>
+//#include "ast_decl.h"
+//#include "symtable.h"
 
 using namespace std;
 
 class SymbolTable;
+
+
 class MyStack;
 class FnDecl;
 //class Decl;
@@ -55,41 +59,43 @@ class FnDecl;
 
 
 class Node  {
-  protected:
-    yyltype *location;
-    Node *parent;
+	protected:
+		yyltype *location;
+		Node *parent;
 
-  public:
-    Node(yyltype loc);
-    Node();
-    virtual ~Node() {}
-    
-    yyltype *GetLocation()   { return location; }
-    void SetParent(Node *p)  { parent = p; }
-    Node *GetParent()        { return parent; }
+	public:
 
-    virtual const char *GetPrintNameForNode() = 0;
-    
-    // Print() is deliberately _not_ virtual
-    // subclasses should override PrintChildren() instead
-    void Print(int indentLevel, const char *label = NULL); 
-    virtual void PrintChildren(int indentLevel)  {}
+		static SymbolTable *symtab;
+		Node(yyltype loc);
+		Node();
+		virtual ~Node() {}
 
-    virtual void Check() {}
+		yyltype *GetLocation()   { return location; }
+		void SetParent(Node *p)  { parent = p; }
+		Node *GetParent()        { return parent; }
+
+		virtual const char *GetPrintNameForNode() = 0;
+
+		// Print() is deliberately _not_ virtual
+		// subclasses should override PrintChildren() instead
+		void Print(int indentLevel, const char *label = NULL); 
+		virtual void PrintChildren(int indentLevel)  {}
+
+		virtual void Check() {}
 };
-   
+
 
 class Identifier : public Node 
 {
-  protected:
-    char *name;
-    
-  public:
-    Identifier(yyltype loc, const char *name);
-    const char *GetPrintNameForNode()   { return "Identifier"; }
-    char *GetName() const { return name; }
-    void PrintChildren(int indentLevel);
-    friend ostream& operator<<(ostream& out, Identifier *id) { return out << id->name; }
+	protected:
+
+	public:
+		char *name;
+		Identifier(yyltype loc, const char *name);
+		const char *GetPrintNameForNode()   { return "Identifier"; }
+		char *GetName() const { return name; }
+		void PrintChildren(int indentLevel);
+		friend ostream& operator<<(ostream& out, Identifier *id) { return out << id->name; }
 };
 
 
@@ -100,9 +106,9 @@ class Identifier : public Node
 // when your parser can continue after an error.
 class Error : public Node
 {
-  public:
-    Error() : Node() {}
-    const char *GetPrintNameForNode()   { return "Error"; }
+	public:
+		Error() : Node() {}
+		const char *GetPrintNameForNode()   { return "Error"; }
 };
 
 
