@@ -32,7 +32,10 @@ void Program::Check() {
 
 	// sample test - not the actual working code
 	// replace it with your own implementation
+	
+	symtab->push_scope(SymbolTable::Global);	//global scope
 	if ( decls->NumElements() > 0 ) {
+
 		for ( int i = 0; i < decls->NumElements(); ++i ) {
 			Decl *d = decls->Nth(i);
 			/* !!! YOUR CODE HERE !!!
@@ -43,11 +46,15 @@ void Program::Check() {
 			d->Check();
 		}
 	}
+	symtab->pop_scope();	//pop global
 
 	
 }
 
 void StmtBlock::Check() {
+	
+	symtab->push_scope(SymbolTable::Block);
+
 	if ( decls->NumElements() > 0 ) {
 		for ( int i = 0; i < decls->NumElements(); ++i ) {
 			Decl *d = decls->Nth(i);
@@ -71,6 +78,8 @@ void StmtBlock::Check() {
 			s->Check();
 		}
 	}
+
+	symtab->pop_scope();
 }
 
 void DeclStmt::Check() {
@@ -105,7 +114,9 @@ void DeclStmt::PrintChildren(int indentLevel) {
 }
 
 void ConditionalStmt::Check() {
+	symtab->push_scope(SymbolTable::Conditional);
 	body->Check();
+	symtab->pop_scope();
 }
 
 ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) { 
@@ -115,7 +126,9 @@ ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) {
 }
 
 void ForStmt::Check() {
+	symtab->push_scope(SymbolTable::Loop);
 	body->Check();
+	symtab->pop_scope();
 }
 
 ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b): LoopStmt(t, b) { 
@@ -124,11 +137,6 @@ ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b): LoopStmt(t, b) {
 	step = s;
 	if ( s )
 		(step=s)->SetParent(this);
-
-	//symtab->push_scope();
-	//string iidentname(i->
-	//HOW TO DO??????????????????????????????????????????????????????????????????????????????
-
 }
 
 void ForStmt::PrintChildren(int indentLevel) {
@@ -140,7 +148,9 @@ void ForStmt::PrintChildren(int indentLevel) {
 }
 
 void WhileStmt::Check() {
+	symtab->push_scope(SymbolTable::Loop);
 	body->Check();
+	symtab->pop_scope();
 }
 
 void WhileStmt::PrintChildren(int indentLevel) {
@@ -148,12 +158,17 @@ void WhileStmt::PrintChildren(int indentLevel) {
 	body->Print(indentLevel+1, "(body) ");
 }
 
+void IfStmt::Check() {
+	symtab->push_scope(SymbolTable::Conditional);
+	body->Check();
+	symtab->pop_scope();
+}
+
 IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) { 
 	Assert(t != NULL && tb != NULL); // else can be NULL
 	elseBody = eb;
 	if (elseBody) elseBody->SetParent(this);
 
-	//symtab->push_scope();
 }
 
 void IfStmt::PrintChildren(int indentLevel) {
@@ -162,6 +177,9 @@ void IfStmt::PrintChildren(int indentLevel) {
 	if (elseBody) elseBody->Print(indentLevel+1, "(else) ");
 }
 
+void ReturnStmt::Check() {
+	expr->Check();
+}
 
 ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) { 
 	expr = e;
@@ -204,3 +222,14 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 	if (def) def->Print(indentLevel+1);
 }
 
+void BreakStmt::Check() {
+	if(!symtab->is_in_loop() && !symtab->is_in_switch()) {
+		ReportError::BreakOutsideLoop(this);
+	}
+}
+
+void ContinueStmt::Check() {
+	if(!symtab->is_in_loop()) {
+		ReportError::ContinueOutsideLoop(this);
+	}
+}

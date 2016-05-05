@@ -7,26 +7,25 @@
 #include <string.h>
 #include <stdio.h>
 
-void SymbolTable::push_scope() {
+void SymbolTable::push_scope(scopeType st) {
 	map<string, Decl*> scope = map<string, Decl*>();
 	symbolTable->push_back(scope);
+	scopeTypeStack->push_back(st);
 	currentScope++;
 }
 
 void SymbolTable::pop_scope() {
 	symbolTable->pop_back();
+	scopeTypeStack->pop_back();
 	currentScope--;
 }
 
-bool SymbolTable::add_decl(string ident, Decl* dec) {
-	if(search_scope(ident) == NULL) {
-		symbolTable->at(currentScope).insert(pair<string, Decl*>(ident, dec));
-		return true;
+void SymbolTable::add_decl(string ident, Decl* dec) {
+	if(search_curr(ident) != NULL) {
+		ReportError::DeclConflict(dec, search_curr(ident));
 	}
-	else {
-		printf("gotta throw yung error here, variable already declared");
-		return false;
-	}
+	symbolTable->at(currentScope).insert(pair<string, Decl*>(ident, dec));
+
 }
 
 bool SymbolTable::add_decl(string ident, FnDecl* fndec) {
@@ -35,13 +34,44 @@ bool SymbolTable::add_decl(string ident, FnDecl* fndec) {
 }
 
 Decl* SymbolTable::search_scope(string ident) {
-
+	int num = 0;
 	for(int i = currentScope; i >= 0; i--) {
-		int num = symbolTable->at(i).count(ident);
+		num = symbolTable->at(i).count(ident);
 		if (num > 0) {
 			return symbolTable->at(i).at(ident);
 		}
 	}
+
+	// Identifier* id = Identifier(ident);
+	// ReportError::IdentifierNotDeclared(ident, LookingFor
 	return NULL;
-	
+
+}
+
+bool SymbolTable::is_in_loop() {
+	for(int i = currentScope; i >= 0; i--) {
+		if (scopeTypeStack->at(i) == SymbolTable::Loop) {
+			return true;
+		}
+	}
+	return false;
+
+}
+
+bool SymbolTable::is_in_switch() {
+	for(int i = currentScope; i >= 0; i--) {
+		if (scopeTypeStack->at(i) == SymbolTable::Switch) {
+			return true;
+		}
+	}
+	return false;
+}
+
+Decl* SymbolTable::search_curr(string ident) {
+	int num = symbolTable->at(currentScope).count(ident);
+	if (num > 0) {
+		return symbolTable->at(currentScope).at(ident);
+	}
+
+	return NULL;
 }

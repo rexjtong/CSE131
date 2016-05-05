@@ -66,7 +66,7 @@ class ReportError {
   static void UnrecogChar(yyltype *loc, char ch);
 
   // Errors used by semantic analyzer for declarations
-  static void DeclConflict(Decl *newDecl, Decl *prevDecl);
+  static void DeclConflict(Decl *newDecl, Decl *prevDecl);			//
   static void InvalidInitialization(Identifier *id, Type *lType, Type *rType);
   
   
@@ -96,8 +96,8 @@ class ReportError {
   static void TestNotBoolean(Expr *testExpr);
   static void ReturnMismatch(ReturnStmt *rStmt, Type *given, Type *expected);
   static void ReturnMissing(FnDecl *fnDecl);
-  static void BreakOutsideLoop(BreakStmt *bStmt); 
-  static void ContinueOutsideLoop(ContinueStmt *cStmt); 
+  static void BreakOutsideLoop(BreakStmt *bStmt); 				//
+  static void ContinueOutsideLoop(ContinueStmt *cStmt); 			//
 
   // Generic method to report a printf-style error message
   static void Formatted(yyltype *loc, const char *format, ...);
