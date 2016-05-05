@@ -28,6 +28,8 @@ void Program::Check() {
 	 *      and polymorphism in the node classes.
 	 */
 
+	
+
 	// sample test - not the actual working code
 	// replace it with your own implementation
 	if ( decls->NumElements() > 0 ) {
@@ -39,12 +41,14 @@ void Program::Check() {
 			 */
 		}
 	}
+
+	
 }
 
 StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
 	Assert(d != NULL && s != NULL);
 
-	symtab->push_scope();
+	//symtab->push_scope();
 
 	(decls=d)->SetParentAll(this);
 	(stmts=s)->SetParentAll(this);
@@ -60,8 +64,8 @@ DeclStmt::DeclStmt(Decl *d) {
 	Assert(d != NULL);
 	(decl=d)->SetParent(this);
 
-	string identname(d->id->name);
-	symtab->add_decl(identname, d);
+	//string identname(d->id->name);
+	//symtab->add_decl(identname, d);
 }
 
 void DeclStmt::PrintChildren(int indentLevel) {
@@ -104,6 +108,8 @@ IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) {
 	Assert(t != NULL && tb != NULL); // else can be NULL
 	elseBody = eb;
 	if (elseBody) elseBody->SetParent(this);
+
+	//symtab->push_scope();
 }
 
 void IfStmt::PrintChildren(int indentLevel) {

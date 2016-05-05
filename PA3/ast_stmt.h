@@ -100,7 +100,9 @@ class ForStmt : public LoopStmt
 class WhileStmt : public LoopStmt 
 {
   public:
-    WhileStmt(Expr *test, Stmt *body) : LoopStmt(test, body) {}
+    WhileStmt(Expr *test, Stmt *body) : LoopStmt(test, body) {
+		//symtab->push_scope();
+	}
     const char *GetPrintNameForNode() { return "WhileStmt"; }
     void PrintChildren(int indentLevel);
 
