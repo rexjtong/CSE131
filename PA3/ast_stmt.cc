@@ -104,10 +104,18 @@ void DeclStmt::PrintChildren(int indentLevel) {
 	decl->Print(indentLevel+1);
 }
 
+void ConditionalStmt::Check() {
+	body->Check();
+}
+
 ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) { 
 	Assert(t != NULL && b != NULL);
 	(test=t)->SetParent(this); 
 	(body=b)->SetParent(this);
+}
+
+void ForStmt::Check() {
+	body->Check();
 }
 
 ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b): LoopStmt(t, b) { 
@@ -129,6 +137,10 @@ void ForStmt::PrintChildren(int indentLevel) {
 	if ( step )
 		step->Print(indentLevel+1, "(step) ");
 	body->Print(indentLevel+1, "(body) ");
+}
+
+void WhileStmt::Check() {
+	body->Check();
 }
 
 void WhileStmt::PrintChildren(int indentLevel) {

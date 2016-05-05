@@ -77,6 +77,7 @@ class ConditionalStmt : public Stmt
   public:
     ConditionalStmt() : Stmt(), test(NULL), body(NULL) {}
     ConditionalStmt(Expr *testExpr, Stmt *body);
+    virtual void Check();
 
 };
 
@@ -96,6 +97,7 @@ class ForStmt : public LoopStmt
     ForStmt(Expr *init, Expr *test, Expr *step, Stmt *body);
     const char *GetPrintNameForNode() { return "ForStmt"; }
     void PrintChildren(int indentLevel);
+    virtual void Check();
 
 };
 
@@ -107,6 +109,7 @@ class WhileStmt : public LoopStmt
 	}
     const char *GetPrintNameForNode() { return "WhileStmt"; }
     void PrintChildren(int indentLevel);
+    virtual void Check();
 
 };
 
