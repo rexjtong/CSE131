@@ -39,10 +39,42 @@ void Program::Check() {
 			 * Basically you have to make sure that each declaration is 
 			 * semantically correct.
 			 */
+			
+			d->Check();
 		}
 	}
 
 	
+}
+
+void StmtBlock::Check() {
+	if ( decls->NumElements() > 0 ) {
+		for ( int i = 0; i < decls->NumElements(); ++i ) {
+			Decl *d = decls->Nth(i);
+			/* !!! YOUR CODE HERE !!!
+			 * Basically you have to make sure that each declaration is 
+			 * semantically correct.
+			 */
+			
+			d->Check();
+		}
+	}
+
+	if ( stmts->NumElements() > 0 ) {
+		for ( int i = 0; i < stmts->NumElements(); ++i ) {
+			Stmt *s = stmts->Nth(i);
+			/* !!! YOUR CODE HERE !!!
+			 * Basically you have to make sure that each declaration is 
+			 * semantically correct.
+			 */
+			
+			s->Check();
+		}
+	}
+}
+
+void DeclStmt::Check() {
+	symtab->add_decl(string(this->decl->id->name), this->decl);
 }
 
 StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {

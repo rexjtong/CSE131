@@ -12,6 +12,10 @@ Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
     (id=n)->SetParent(this); 
 }
 
+void VarDecl::Check() {
+	symtab->add_decl(string(this->id->name), this);
+}
+
 VarDecl::VarDecl(Identifier *n, Type *t, Expr *e) : Decl(n) {
     Assert(n != NULL && t != NULL);
     (type=t)->SetParent(this);
@@ -38,6 +42,10 @@ void VarDecl::PrintChildren(int indentLevel) {
    if (type) type->Print(indentLevel+1);
    if (id) id->Print(indentLevel+1);
    if (assignTo) assignTo->Print(indentLevel+1, "(initializer) ");
+}
+
+void FnDecl::Check() {
+	symtab->add_decl(string(this->id->name), this);
 }
 
 FnDecl::FnDecl(Identifier *n, Type *r, List<VarDecl*> *d) : Decl(n) {
