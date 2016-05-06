@@ -36,7 +36,10 @@ class SymbolTable {
 		vector< map < string, Decl* > > *symbolTable; //= new vector< map < string, Decl* > >();
 		int currentScope;
 
-		SymbolTable() : currentScope(-1) {symbolTable = new vector< map < string, Decl* > >();}
+		SymbolTable() : currentScope(-1) {
+			symbolTable = new vector< map < string, Decl* > >();
+			scopeTypeStack = new vector< scopeType >();
+		}
 
 		void push_scope(scopeType st);
 		void pop_scope();

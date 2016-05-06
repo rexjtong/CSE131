@@ -20,11 +20,15 @@
 
 void yyerror(const char *msg);
 
+class Type;
+
 class Expr : public Stmt 
 {
   public:
     Expr(yyltype loc) : Stmt(loc) {}
     Expr() : Stmt() {}
+    Type *type;
+    Type* getType();
 
     friend std::ostream& operator<< (std::ostream& stream, Expr * expr) {
         return stream << expr->GetPrintNameForNode();
@@ -56,6 +60,7 @@ class IntConstant : public Expr
     IntConstant(yyltype loc, int val);
     const char *GetPrintNameForNode() { return "IntConstant"; }
     void PrintChildren(int indentLevel);
+    virtual void Check();
 };
 
 class FloatConstant: public Expr 
@@ -67,6 +72,7 @@ class FloatConstant: public Expr
     FloatConstant(yyltype loc, double val);
     const char *GetPrintNameForNode() { return "FloatConstant"; }
     void PrintChildren(int indentLevel);
+    virtual void Check();
 };
 
 class BoolConstant : public Expr 
@@ -78,6 +84,7 @@ class BoolConstant : public Expr
     BoolConstant(yyltype loc, bool val);
     const char *GetPrintNameForNode() { return "BoolConstant"; }
     void PrintChildren(int indentLevel);
+virtual void Check();
 };
 
 class VarExpr : public Expr
@@ -90,6 +97,7 @@ class VarExpr : public Expr
     const char *GetPrintNameForNode() { return "VarExpr"; }
     void PrintChildren(int indentLevel);
     Identifier *GetIdentifier() {return id;}
+    virtual void Check();
 };
 
 class Operator : public Node 
@@ -103,6 +111,7 @@ class Operator : public Node
     void PrintChildren(int indentLevel);
     friend ostream& operator<<(ostream& out, Operator *o) { return out << o->tokenString; }
     bool IsOp(const char *op) const;
+    virtual void Check();
  };
  
 class CompoundExpr : public Expr
@@ -124,6 +133,7 @@ class ArithmeticExpr : public CompoundExpr
     ArithmeticExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     ArithmeticExpr(Operator *op, Expr *rhs) : CompoundExpr(op,rhs) {}
     const char *GetPrintNameForNode() { return "ArithmeticExpr"; }
+    //virtual void Check();
 };
 
 class RelationalExpr : public CompoundExpr 

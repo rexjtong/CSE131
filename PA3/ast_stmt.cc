@@ -223,6 +223,8 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 void BreakStmt::Check() {
+	printf("breaking break");
+
 	if(!symtab->is_in_loop() && !symtab->is_in_switch()) {
 		ReportError::BreakOutsideLoop(this);
 	}
