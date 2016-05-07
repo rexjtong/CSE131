@@ -49,6 +49,7 @@ class EmptyExpr : public Expr
 {
   public:
     const char *GetPrintNameForNode() { return "Empty"; }
+    virtual void Check();
 };
 
 class IntConstant : public Expr 
@@ -202,6 +203,7 @@ class ArrayAccess : public LValue
     ArrayAccess(yyltype loc, Expr *base, Expr *subscript);
     const char *GetPrintNameForNode() { return "ArrayAccess"; }
     void PrintChildren(int indentLevel);
+    virtual void Check();
 };
 
 /* Note that field access is used both for qualified names

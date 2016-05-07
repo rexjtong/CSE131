@@ -350,7 +350,23 @@ void ConditionalExpr::PrintChildren(int indentLevel) {
 	trueExpr->Print(indentLevel+1, "(true) ");
 	falseExpr->Print(indentLevel+1, "(false) ");
 }
-ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
+
+
+void EmptyExpr::Check() {
+	this->type = Type::voidType;
+}
+
+void ArrayAccess::Check() {
+        base->Check();
+        subscript->Check();
+        VarExpr* var = dynamic_cast<VarExpr*>(base);
+
+        if(symtab->search_scope(string(var->GetIdentifier()->name)) == NULL) {
+                ReportError::NotAnArray(var->GetIdentifier());
+        }
+}
+
+ArrayAccess::ArrayAccess(yyltype loc,Expr *b, Expr *s) : LValue(loc) {
 	(base=b)->SetParent(this); 
 	(subscript=s)->SetParent(this);
 }

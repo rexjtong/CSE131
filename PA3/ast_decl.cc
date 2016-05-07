@@ -15,6 +15,16 @@ Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
 void VarDecl::Check() {
 	printf("Checking VarDecl Node\n");
 
+	if(assignTo != NULL) {
+		assignTo->Check();
+		//TODO Weird question about cascading errors and errorType
+		if(this->GetType() != assignTo->type) {
+			ReportError::InvalidInitialization(this->id, this->GetType(), assignTo->type);
+			Type* theType = this->GetType();
+			theType = Type::errorType;
+		}
+	}
+
 	symtab->add_decl(string(this->id->name), this);
 }
 

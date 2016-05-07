@@ -127,8 +127,9 @@ void StmtBlock::Check() {
 void DeclStmt::Check() {
 	printf("Checking DeclStmt Node\n");
 
+	decl->Check();
 
-	symtab->add_decl(string(this->decl->id->name), this->decl);
+	// symtab->add_decl(string(this->decl->id->name), this->decl);
 }
 
 StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
