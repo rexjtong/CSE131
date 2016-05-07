@@ -57,6 +57,7 @@ void FnDecl::Check() {
 
 
 	if(this->getBody() != NULL) {
+		symtab->foundReturn = false;
 		symtab->push_scope(SymbolTable::Function);
 
 		for(int i = 0; i < forms->NumElements(); i++) { //Get all declarations in func and Check() them
@@ -65,7 +66,9 @@ void FnDecl::Check() {
 
 		this->getBody()->Check();
 
-
+		if(!symtab->foundReturn && (this->GetType() != Type::voidType)) {
+			ReportError::ReturnMissing(this);
+		}
 
 		symtab->pop_scope();
 	}

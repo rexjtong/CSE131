@@ -60,6 +60,7 @@ void VarExpr::Check() {
 
 	Decl* vardec = symtab->search_scope(string(this->id->name));
 	if (vardec == NULL) {
+		this->type = Type::errorType;
 		ReportError::IdentifierNotDeclared(this->id, LookingForVariable);
 	}
 	else {
@@ -100,8 +101,6 @@ void Operator::Check() {
 			return;
 		}
 	}
-
-	printf("Operator is not usable");
 }
 
 CompoundExpr::CompoundExpr(Expr *l, Operator *o, Expr *r) 
@@ -208,6 +207,7 @@ void ArithmeticExpr::Check() {
 		//if(left->getType() 
 		ReportError::IncompatibleOperand(op, right->getType());
 		right->type = Type::errorType;
+		this->type = right->getType();
 
 	}
 	
@@ -282,6 +282,7 @@ void LogicalExpr::Check() {
 	if(right->getType() != Type::boolType) {
 		right->type = Type::errorType;
 	}
+	this->type = Type::boolType;
 
 	// ReportError::IncompatibleOperand(op, right->getType());
 
@@ -294,7 +295,6 @@ void PostfixExpr::Check() {
 	printf("Checking PostfixExpr Node\n");
 	op->Check();
 	left->Check();
-
 	/**
 	  string postfixArr [] = {"++", "--"};
 
@@ -319,6 +319,7 @@ void PostfixExpr::Check() {
 	//if(left->getType() 
 	ReportError::IncompatibleOperand(op, left->getType());
 	left->type = Type::errorType;
+	this->type = left->getType();
 
 }
 
@@ -387,3 +388,31 @@ void Call::PrintChildren(int indentLevel) {
 	if (actuals) actuals->PrintAll(indentLevel+1, "(actuals) ");
 }
 
+void RelationalExpr::Check() {
+	printf("Checking RelationalExpr Node\n");
+	this->type = Type::boolType;
+	op->Check();
+	left->Check();
+	right->Check();
+	if(left->getType() != Type::errorType && right->getType() != Type::errorType) {
+		if((!left->getType()->IsNumeric()) && (!right->getType()->IsNumeric())) {
+			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+			left->type = Type::errorType;
+			right->type = Type::errorType;
+		}
+		else if(!left->getType()->IsNumeric()) {
+			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+			left->type = Type::errorType;
+		}
+		else if(!right->getType()->IsNumeric()) {
+			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+			right->type = Type::errorType;
+		}
+		else if(right->getType() != left->getType()) {
+			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+			right->type = Type::errorType;
+			left->type = Type::errorType;
+		}
+
+	}
+}

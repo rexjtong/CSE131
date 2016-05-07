@@ -35,10 +35,14 @@ class SymbolTable {
 		vector< scopeType > *scopeTypeStack;
 		vector< map < string, Decl* > > *symbolTable; //= new vector< map < string, Decl* > >();
 		int currentScope;
+		bool justLike;
+		FnDecl* lastFunc;
+		bool foundReturn;
 
 		SymbolTable() : currentScope(-1) {
 			symbolTable = new vector< map < string, Decl* > >();
 			scopeTypeStack = new vector< scopeType >();
+			justLike = false;
 		}
 
 		void print_table();
@@ -50,6 +54,7 @@ class SymbolTable {
 		bool is_in_loop();
 		bool is_in_switch();
 		Decl* search_curr(string ident);
+		FnDecl* recentFunc();
 
 
 };

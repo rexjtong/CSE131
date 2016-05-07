@@ -63,6 +63,7 @@ bool SymbolTable::add_decl(string ident, FnDecl* fndec) {
 	if(search_curr(ident) != NULL) {
 		ReportError::DeclConflict(fndec, search_curr(ident));
 	}
+	lastFunc = fndec;
 	symbolTable->at(currentScope).insert(pair<string, Decl*>(ident, fndec));
 	return true;
 }
@@ -108,4 +109,8 @@ Decl* SymbolTable::search_curr(string ident) {
 	}
 
 	return NULL;
+}
+
+FnDecl* SymbolTable::recentFunc() {
+	return lastFunc;
 }

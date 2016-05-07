@@ -60,9 +60,8 @@ void StmtBlock::Check() {
 
 	printf("Checking StmtBlock Node\n");
 
-	if(symtab->scopeTypeStack->back() == SymbolTable::Function) {
-		symtab->scopeTypeStack->pop_back();
-		symtab->scopeTypeStack->push_back(SymbolTable::Block);
+	if(symtab->justLike) {
+		symtab->justLike = false;
 
 
 		if ( decls->NumElements() > 0 ) {
@@ -174,8 +173,25 @@ ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) {
 void ForStmt::Check() {
 	printf("Checking ForStmt Node\n");
 
+
 	symtab->push_scope(SymbolTable::Loop);
+	symtab->justLike = true;
+
+	init->Check();
+	
+	test->Check();
+	
+	if(!test->type->IsBool()) {
+		ReportError::TestNotBoolean(test);
+		test->type = Type::errorType;
+	}
+
+	if(step != NULL) {
+		step->Check();
+	}
+	
 	body->Check();
+
 	symtab->pop_scope();
 }
 
@@ -199,6 +215,16 @@ void WhileStmt::Check() {
 	printf("Checking WhileStmt Node\n");
 
 	symtab->push_scope(SymbolTable::Loop);
+	symtab->justLike = true;
+
+	test->Check();
+
+	if(!test->type->IsBool()) {
+		ReportError::TestNotBoolean(test);
+		test->type = Type::errorType;
+	}
+
+
 	body->Check();
 	symtab->pop_scope();
 }
@@ -212,7 +238,22 @@ void IfStmt::Check() {
 	printf("Checking IfStmt Node\n");
 
 	symtab->push_scope(SymbolTable::Conditional);
+	symtab->justLike = true;
+
+	test->Check();
+
+	if(!test->type->IsBool()) {
+		ReportError::TestNotBoolean(test);
+		test->type = Type::errorType;
+	}
+
 	body->Check();
+
+	if(elseBody != NULL) {
+		elseBody->Check();
+	}
+
+
 	symtab->pop_scope();
 }
 
@@ -231,8 +272,18 @@ void IfStmt::PrintChildren(int indentLevel) {
 
 void ReturnStmt::Check() {
 	printf("Checking ReturnStmt Node\n");
+	
+	symtab->foundReturn = true;
 
-	expr->Check();
+	FnDecl* func = symtab->recentFunc();
+
+	if(expr != NULL) {
+		expr->Check();
+
+		if(func->GetType() != expr->getType()) {
+			ReportError::ReturnMismatch(this, expr->getType(), func->GetType());
+		}
+	}
 }
 
 ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) { 
