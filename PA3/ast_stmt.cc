@@ -57,37 +57,73 @@ void Program::Check() {
 }
 
 void StmtBlock::Check() {
-	
+
 	printf("Checking StmtBlock Node\n");
 
-	symtab->push_scope(SymbolTable::Block);
+	if(symtab->scopeTypeStack->back() == SymbolTable::Function) {
+		symtab->scopeTypeStack->pop_back();
+		symtab->scopeTypeStack->push_back(SymbolTable::Block);
 
-	if ( decls->NumElements() > 0 ) {
-		for ( int i = 0; i < decls->NumElements(); ++i ) {
-			Decl *d = decls->Nth(i);
-			/* !!! YOUR CODE HERE !!!
-			 * Basically you have to make sure that each declaration is 
-			 * semantically correct.
-			 */
-			
-			d->Check();
+
+		if ( decls->NumElements() > 0 ) {
+			for ( int i = 0; i < decls->NumElements(); ++i ) {
+				Decl *d = decls->Nth(i);
+				/* !!! YOUR CODE HERE !!!
+				 * Basically you have to make sure that each declaration is 
+				 * semantically correct.
+				 */
+
+				d->Check();
+			}
 		}
+
+		if ( stmts->NumElements() > 0 ) {
+			for ( int i = 0; i < stmts->NumElements(); ++i ) {
+				Stmt *s = stmts->Nth(i);
+				/* !!! YOUR CODE HERE !!!
+				 * Basically you have to make sure that each declaration is 
+				 * semantically correct.
+				 */
+
+				s->Check();
+			}
+		}
+		return;
+
 	}
 
-	if ( stmts->NumElements() > 0 ) {
-		for ( int i = 0; i < stmts->NumElements(); ++i ) {
-			Stmt *s = stmts->Nth(i);
-			/* !!! YOUR CODE HERE !!!
-			 * Basically you have to make sure that each declaration is 
-			 * semantically correct.
-			 */
-			
-			s->Check();
-		}
-	}
+	else {
 
-	symtab->pop_scope();
+		symtab->push_scope(SymbolTable::Block);
+
+		if ( decls->NumElements() > 0 ) {
+			for ( int i = 0; i < decls->NumElements(); ++i ) {
+				Decl *d = decls->Nth(i);
+				/* !!! YOUR CODE HERE !!!
+				 * Basically you have to make sure that each declaration is 
+				 * semantically correct.
+				 */
+
+				d->Check();
+			}
+		}
+
+		if ( stmts->NumElements() > 0 ) {
+			for ( int i = 0; i < stmts->NumElements(); ++i ) {
+				Stmt *s = stmts->Nth(i);
+				/* !!! YOUR CODE HERE !!!
+				 * Basically you have to make sure that each declaration is 
+				 * semantically correct.
+				 */
+
+				s->Check();
+			}
+		}
+
+		symtab->pop_scope();
+	}
 }
+
 
 void DeclStmt::Check() {
 	printf("Checking DeclStmt Node\n");

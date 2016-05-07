@@ -174,66 +174,108 @@ void CompoundExpr::PrintChildren(int indentLevel) {
 
 
 void ArithmeticExpr::Check() {
-	op->Check();
-	left->Check();
-	right->Check();
+	printf("Checking ArithmeticExpr Node\n");
 
+	
 	bool isUnary = false;
 
 	if(left == NULL) {
 		isUnary = true;
 	}
 
-	string unaryArr [] = {"++", "--", "+", "-"};
-	string arithArr [] = {"+", "-", "*", "/"};
+	op->Check();
+	right->Check();
 
+	if(!isUnary) {
+		left->Check();
+	}
+
+
+	Type* typeArr [] = {Type::intType, Type::floatType, Type::vec2Type, Type::vec3Type, Type::vec4Type, Type::mat2Type, Type::mat3Type, Type::mat4Type};
 	if(isUnary) {
-		for(int i = 0; i < 4; i++) {
-			if (op->IsOp(arithArr[i].c_str())) {
-				return;
-			}
+
+		if(right->getType() == Type::errorType) {
+			return;
 		}
 
-		ReportError::IncompatibleOperand(op, right->getType());
-	}
-	else {
-		for(int i = 0; i < 4; i++) {
-			if (op->IsOp(arithArr[i].c_str())) {
-				return;
+		for(int i = 0; i < 8; i++) {
+			if(right->getType() == typeArr[i]) {
+				return;	
 			}
+
 		}
-		
-		ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+
+		//if(left->getType() 
+		ReportError::IncompatibleOperand(op, right->getType());
+		right->type = Type::errorType;
+
 	}
+	
+	else {
+		//TODO CAN WE ADD INTS AND FLOATS?????
+	}
+
+	/*string unaryArr [] = {"++", "--", "+", "-"};
+	  string arithArr [] = {"+", "-", "*", "/"};
+
+	  if(isUnary) {
+	  for(int i = 0; i < 4; i++) {
+	  if (op->IsOp(arithArr[i].c_str())) {
+	  return;
+	  }
+	  }
+
+	  ReportError::IncompatibleOperand(op, right->getType());
+	  }
+	  else {
+	  for(int i = 0; i < 4; i++) {
+	  if (op->IsOp(arithArr[i].c_str())) {
+	  return;
+	  }
+	  }
+
+	  ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+	  }*/
 }
 
 void ConditionalExpr::Check() {
+	printf("Checking ConditionalExpr Node\n");
 	cond->Check();
 	trueExpr->Check();
 	falseExpr->Check();
 }
 
 void LogicalExpr::Check() {
+	printf("Checking LogicalExpr Node\n");
 	op->Check();
 	left->Check();
 	right->Check();
 
 	/*
-	string logicalArr [] = {"&&", "||"};
+	   string logicalArr [] = {"&&", "||"};
 
-	for(int i = 0; i < 2; i++) {
-		if (op->IsOp(logicalArr[i].c_str())) {
-			return;
-		}
-	}*/
+	   for(int i = 0; i < 2; i++) {
+	   if (op->IsOp(logicalArr[i].c_str())) {
+	   return;
+	   }
+	   }*/
 
-//	if(left->getType()->IsBool()) {
+	//	if(left->getType()->IsBool()) {
 
-//	}
-	if((left->getType() != Type::boolType) || (right->getType() != Type::boolType)) {
+	//	}
+
+	//if((left->getType() != Type::boolType) || (right->getType() != Type::boolType)) {
+	//	ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+	//}
+
+	if((left->getType() != Type::boolType) && (left->getType() != Type::errorType)) {
 		ReportError::IncompatibleOperands(op, left->getType(), right->getType());
 	}
-	
+
+	else if((right->getType() != Type::boolType) && (right->getType() != Type::errorType)) {
+		ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+	}
+
 	if(left->getType() != Type::boolType) {
 		left->type = Type::errorType;
 	}
@@ -243,37 +285,55 @@ void LogicalExpr::Check() {
 
 	// ReportError::IncompatibleOperand(op, right->getType());
 
-//	if(left->getType != Type::boolType) {
+	//	if(left->getType != Type::boolType) {
 
-//	}
+	//	}
 }
 
 void PostfixExpr::Check() {
+	printf("Checking PostfixExpr Node\n");
 	op->Check();
 	left->Check();
 
 	/**
-	string postfixArr [] = {"++", "--"};
+	  string postfixArr [] = {"++", "--"};
 
-	for(int i = 0; i < 2; i++) {
-		if (op->IsOp(postfixArr[i].c_str())) {
-			return;
+	  for(int i = 0; i < 2; i++) {
+	  if (op->IsOp(postfixArr[i].c_str())) {
+	  return;
+	  }
+	  }*/
+
+	Type* typeArr [] = {Type::intType, Type::floatType, Type::vec2Type, Type::vec3Type, Type::vec4Type, Type::mat2Type, Type::mat3Type, Type::mat4Type};
+	if(left->getType() == Type::errorType) {
+		return;
+	}
+
+	for(int i = 0; i < 8; i++) {
+		if(left->getType() == typeArr[i]) {
+			return;	
 		}
-	}*/
-	
-	Type* typeArr [] = {Type::intType, Type::floatType, Type::vec2Type, Type::vec3Type, Type::vec4Type};
+
+	}
 
 	//if(left->getType() 
-
 	ReportError::IncompatibleOperand(op, left->getType());
+	left->type = Type::errorType;
+
 }
 
 void AssignExpr::Check() {
+	printf("Checking AssignExpr Node\n");
 	op->Check();
 	left->Check();
 	right->Check();
+	if(left->getType() != Type::errorType && right->getType() != Type::errorType) {
+		if(left->getType() != right->getType()) {
+			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+			left->type = Type::errorType;
+		}
 
-	
+	}
 }
 
 ConditionalExpr::ConditionalExpr(Expr *c, Expr *t, Expr *f)

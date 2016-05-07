@@ -6,6 +6,7 @@
 #include "symtable.h"
 #include <string.h>
 #include <stdio.h>
+#include <typeinfo>
 
 void SymbolTable::print_table() {
 	for(int i = currentScope; i >= 0; i--) {
@@ -32,7 +33,7 @@ void SymbolTable::print_table() {
 		printf("--------------------%s-------------------\n", scopeType.c_str());
 
 		for(map<string,Decl*>::iterator it = currMap.begin(); it != currMap.end(); ++it) {
-			printf("Identifier: %s,   Have not implemented value print its annoying\n", (it->first).c_str());
+			printf("Identifier: %s\n", (it->first).c_str());
 		}
 	}
 }
@@ -59,6 +60,9 @@ void SymbolTable::add_decl(string ident, Decl* dec) {
 }
 
 bool SymbolTable::add_decl(string ident, FnDecl* fndec) {
+	if(search_curr(ident) != NULL) {
+		ReportError::DeclConflict(fndec, search_curr(ident));
+	}
 	symbolTable->at(currentScope).insert(pair<string, Decl*>(ident, fndec));
 	return true;
 }

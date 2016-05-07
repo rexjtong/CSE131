@@ -16,11 +16,6 @@ void VarDecl::Check() {
 	printf("Checking VarDecl Node\n");
 
 	symtab->add_decl(string(this->id->name), this);
-
-	//if(assignTo != NULL) {
-	//	assignTo->Check();
-
-	//}
 }
 
 VarDecl::VarDecl(Identifier *n, Type *t, Expr *e) : Decl(n) {
@@ -55,6 +50,31 @@ void FnDecl::Check() {
 	printf("Checking FnDecl Node\n");
 
 	symtab->add_decl(string(this->id->name), this);
+
+	List< VarDecl* > *forms = this->GetFormals();
+
+	
+
+
+	if(this->getBody() != NULL) {
+		symtab->push_scope(SymbolTable::Function);
+
+		for(int i = 0; i < forms->NumElements(); i++) { //Get all declarations in func and Check() them
+			forms->Nth(i)->Check();
+		}
+
+		this->getBody()->Check();
+
+
+
+		symtab->pop_scope();
+	}
+
+
+
+	//TODO Possibly assign return type??? Should be good doe
+
+
 }
 
 
