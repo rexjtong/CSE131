@@ -7,6 +7,36 @@
 #include <string.h>
 #include <stdio.h>
 
+void SymbolTable::print_table() {
+	for(int i = currentScope; i >= 0; i--) {
+		string scopeType = "Unknown";
+		map<string,Decl*> currMap = symbolTable->at(i);
+		if(scopeTypeStack->at(i) == Global) {
+			scopeType = "Global";
+		}
+		else if(scopeTypeStack->at(i) == Loop) {
+			scopeType = "Loop";
+		}
+		else if(scopeTypeStack->at(i) == Function) {
+			scopeType = "Function";
+		}
+		else if(scopeTypeStack->at(i) == Conditional) {
+			scopeType = "Conditional";
+		}
+		else if(scopeTypeStack->at(i) == Switch) {
+			scopeType = "Switch";
+		}
+		else if(scopeTypeStack->at(i) == Block) {
+			scopeType = "Block";
+		}
+		printf("--------------------%s-------------------\n", scopeType.c_str());
+
+		for(map<string,Decl*>::iterator it = currMap.begin(); it != currMap.end(); ++it) {
+			printf("Identifier: %s,   Have not implemented value print its annoying\n", (it->first).c_str());
+		}
+	}
+}
+
 void SymbolTable::push_scope(scopeType st) {
 	map<string, Decl*> scope = map<string, Decl*>();
 	symbolTable->push_back(scope);

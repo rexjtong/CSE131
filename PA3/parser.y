@@ -433,12 +433,12 @@ EqualityExpr       : RelationExpr       { $$ = $1; }
                    | EqualityExpr T_EQ RelationExpr 
                            {
                              Operator *op = new Operator(yylloc, $2);
-                             $$ = new ArithmeticExpr($1, op, $3);
+                             $$ = new EqualityExpr($1, op, $3);
                            }
                    | EqualityExpr T_NE RelationExpr 
                            {
                              Operator *op = new Operator(yylloc, $2);
-                             $$ = new ArithmeticExpr($1, op, $3);
+                             $$ = new EqualityExpr($1, op, $3);
                            }
                    ;
 
@@ -446,7 +446,7 @@ LogicAndExpr       : EqualityExpr       { $$ = $1; }
                    | LogicAndExpr T_And EqualityExpr
                            {
                              Operator *op = new Operator(yylloc, $2);
-                             $$ = new ArithmeticExpr($1, op, $3);
+                             $$ = new LogicalExpr($1, op, $3);
                            }
                    ;
 
@@ -454,7 +454,7 @@ LogicOrExpr        : LogicAndExpr       { $$ = $1; }
                    | LogicOrExpr T_Or LogicAndExpr
                            {
                              Operator *op = new Operator(yylloc, $2);
-                             $$ = new ArithmeticExpr($1, op, $3);
+                             $$ = new LogicalExpr($1, op, $3);
                            }
                    ;
 

@@ -13,6 +13,8 @@ Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
 }
 
 void VarDecl::Check() {
+	printf("Checking VarDecl Node\n");
+
 	symtab->add_decl(string(this->id->name), this);
 
 	//if(assignTo != NULL) {
@@ -50,8 +52,12 @@ void VarDecl::PrintChildren(int indentLevel) {
 }
 
 void FnDecl::Check() {
+	printf("Checking FnDecl Node\n");
+
 	symtab->add_decl(string(this->id->name), this);
 }
+
+
 
 FnDecl::FnDecl(Identifier *n, Type *r, List<VarDecl*> *d) : Decl(n) {
 	Assert(n != NULL && r!= NULL && d != NULL);

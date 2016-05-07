@@ -18,6 +18,8 @@ IntConstant::IntConstant(yyltype loc, int val) : Expr(loc) {
 }
 
 void IntConstant::Check() {
+	printf("Checking IntConstant Node\n");
+
 	this->type = Type::intType;
 }
 
@@ -26,6 +28,8 @@ void IntConstant::PrintChildren(int indentLevel) {
 }
 
 void FloatConstant::Check() {
+	printf("Checking FloatConstant Node\n");
+
 	this->type = Type::floatType;
 }
 
@@ -37,8 +41,12 @@ void FloatConstant::PrintChildren(int indentLevel) {
 }
 
 void BoolConstant::Check() {
+	printf("Checking BoolConstant Node\n");
+
 	this->type = Type::boolType;
 }
+
+
 
 BoolConstant::BoolConstant(yyltype loc, bool val) : Expr(loc) {
 	value = val;
@@ -48,6 +56,8 @@ void BoolConstant::PrintChildren(int indentLevel) {
 }
 
 void VarExpr::Check() {
+	printf("Checking VarExpr Node\n");
+
 	Decl* vardec = symtab->search_scope(string(this->id->name));
 	if (vardec == NULL) {
 		ReportError::IdentifierNotDeclared(this->id, LookingForVariable);
@@ -81,7 +91,17 @@ bool Operator::IsOp(const char *op) const {
 }
 
 void Operator::Check() {
-	printf("IMPLEMENT OPERATOR CHECK"); //TODO
+	printf("Checking Operator Node\n");
+
+	string opArr [] = {"++", "--", "-", "+", "*", "/", "==", "!=", "&&", "||", "?", ":", "+=", "-=", "*=", "/=", "<", "<=", ">=", ">"};
+
+	for(int i = 0; i < 20; i++) {
+		if(opArr[i] == this->tokenString) {
+			return;
+		}
+	}
+
+	printf("Operator is not usable");
 }
 
 CompoundExpr::CompoundExpr(Expr *l, Operator *o, Expr *r) 
@@ -152,18 +172,109 @@ void CompoundExpr::PrintChildren(int indentLevel) {
 	if (right) right->Print(indentLevel+1);
 }
 
-/*
+
 void ArithmeticExpr::Check() {
-	this->op->Check();
-	string[] arithArr = {"+", "-", "*", "/", "+=", "-=", "*=", "/="};
-	for(int = 0; i < 8; i++) {
-		if (!this->op->IsOp(arithArr[i])) {
-			ReportError::IncompatibleOperands(
-		}
+	op->Check();
+	left->Check();
+	right->Check();
+
+	bool isUnary = false;
+
+	if(left == NULL) {
+		isUnary = true;
 	}
 
+	string unaryArr [] = {"++", "--", "+", "-"};
+	string arithArr [] = {"+", "-", "*", "/"};
 
-}*/
+	if(isUnary) {
+		for(int i = 0; i < 4; i++) {
+			if (op->IsOp(arithArr[i].c_str())) {
+				return;
+			}
+		}
+
+		ReportError::IncompatibleOperand(op, right->getType());
+	}
+	else {
+		for(int i = 0; i < 4; i++) {
+			if (op->IsOp(arithArr[i].c_str())) {
+				return;
+			}
+		}
+		
+		ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+	}
+}
+
+void ConditionalExpr::Check() {
+	cond->Check();
+	trueExpr->Check();
+	falseExpr->Check();
+}
+
+void LogicalExpr::Check() {
+	op->Check();
+	left->Check();
+	right->Check();
+
+	/*
+	string logicalArr [] = {"&&", "||"};
+
+	for(int i = 0; i < 2; i++) {
+		if (op->IsOp(logicalArr[i].c_str())) {
+			return;
+		}
+	}*/
+
+//	if(left->getType()->IsBool()) {
+
+//	}
+	if((left->getType() != Type::boolType) || (right->getType() != Type::boolType)) {
+		ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+	}
+	
+	if(left->getType() != Type::boolType) {
+		left->type = Type::errorType;
+	}
+	if(right->getType() != Type::boolType) {
+		right->type = Type::errorType;
+	}
+
+	// ReportError::IncompatibleOperand(op, right->getType());
+
+//	if(left->getType != Type::boolType) {
+
+//	}
+}
+
+void PostfixExpr::Check() {
+	op->Check();
+	left->Check();
+
+	/**
+	string postfixArr [] = {"++", "--"};
+
+	for(int i = 0; i < 2; i++) {
+		if (op->IsOp(postfixArr[i].c_str())) {
+			return;
+		}
+	}*/
+	
+	Type* typeArr [] = {Type::intType, Type::floatType, Type::vec2Type, Type::vec3Type, Type::vec4Type};
+
+	//if(left->getType() 
+
+	ReportError::IncompatibleOperand(op, left->getType());
+}
+
+void AssignExpr::Check() {
+	op->Check();
+	left->Check();
+	right->Check();
+
+	
+}
 
 ConditionalExpr::ConditionalExpr(Expr *c, Expr *t, Expr *f)
 	: Expr(Join(c->GetLocation(), f->GetLocation())) {

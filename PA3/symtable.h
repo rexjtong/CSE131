@@ -41,6 +41,7 @@ class SymbolTable {
 			scopeTypeStack = new vector< scopeType >();
 		}
 
+		void print_table();
 		void push_scope(scopeType st);
 		void pop_scope();
 		void add_decl(string ident, Decl* dec);

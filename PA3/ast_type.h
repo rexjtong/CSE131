@@ -59,6 +59,7 @@ class Type : public Node
     virtual bool IsConvertibleTo(Type *other) { return (this == other || this == errorType); }
     bool IsNumeric();
     bool IsVector();
+    bool IsBool();
     bool IsMatrix();
     bool IsError();
 };

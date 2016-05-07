@@ -33,7 +33,10 @@ void Program::Check() {
 	// sample test - not the actual working code
 	// replace it with your own implementation
 	
+	printf("Checking Program Node\n");
+
 	symtab->push_scope(SymbolTable::Global);	//global scope
+
 	if ( decls->NumElements() > 0 ) {
 
 		for ( int i = 0; i < decls->NumElements(); ++i ) {
@@ -46,6 +49,8 @@ void Program::Check() {
 			d->Check();
 		}
 	}
+
+	symtab->print_table();
 	symtab->pop_scope();	//pop global
 
 	
@@ -53,6 +58,8 @@ void Program::Check() {
 
 void StmtBlock::Check() {
 	
+	printf("Checking StmtBlock Node\n");
+
 	symtab->push_scope(SymbolTable::Block);
 
 	if ( decls->NumElements() > 0 ) {
@@ -83,6 +90,9 @@ void StmtBlock::Check() {
 }
 
 void DeclStmt::Check() {
+	printf("Checking DeclStmt Node\n");
+
+
 	symtab->add_decl(string(this->decl->id->name), this->decl);
 }
 
@@ -126,6 +136,8 @@ ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) {
 }
 
 void ForStmt::Check() {
+	printf("Checking ForStmt Node\n");
+
 	symtab->push_scope(SymbolTable::Loop);
 	body->Check();
 	symtab->pop_scope();
@@ -148,6 +160,8 @@ void ForStmt::PrintChildren(int indentLevel) {
 }
 
 void WhileStmt::Check() {
+	printf("Checking WhileStmt Node\n");
+
 	symtab->push_scope(SymbolTable::Loop);
 	body->Check();
 	symtab->pop_scope();
@@ -159,6 +173,8 @@ void WhileStmt::PrintChildren(int indentLevel) {
 }
 
 void IfStmt::Check() {
+	printf("Checking IfStmt Node\n");
+
 	symtab->push_scope(SymbolTable::Conditional);
 	body->Check();
 	symtab->pop_scope();
@@ -178,6 +194,8 @@ void IfStmt::PrintChildren(int indentLevel) {
 }
 
 void ReturnStmt::Check() {
+	printf("Checking ReturnStmt Node\n");
+
 	expr->Check();
 }
 
@@ -223,7 +241,7 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 void BreakStmt::Check() {
-	printf("breaking break");
+	printf("Checking BreakStmt Node\n");
 
 	if(!symtab->is_in_loop() && !symtab->is_in_switch()) {
 		ReportError::BreakOutsideLoop(this);
@@ -231,6 +249,8 @@ void BreakStmt::Check() {
 }
 
 void ContinueStmt::Check() {
+	printf("Checking ContinueStmt Node\n");
+
 	if(!symtab->is_in_loop()) {
 		ReportError::ContinueOutsideLoop(this);
 	}

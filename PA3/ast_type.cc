@@ -64,6 +64,10 @@ bool Type::IsNumeric() {
     return this->IsEquivalentTo(Type::intType) || this->IsEquivalentTo(Type::floatType);
 }
 
+bool Type::IsBool() { 
+    return this->IsEquivalentTo(Type::boolType);
+}
+
 bool Type::IsVector() { 
     return this->IsEquivalentTo(Type::vec2Type) || 
            this->IsEquivalentTo(Type::vec3Type) ||  
