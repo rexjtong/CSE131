@@ -212,7 +212,21 @@ void ArithmeticExpr::Check() {
 	}
 	
 	else {
-		//TODO CAN WE ADD INTS AND FLOATS?????
+		if(left->getType() != Type::errorType && right->getType() != Type::errorType) {
+			if(left->getType() != right->getType()) {
+				ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+				left->type = Type::errorType;
+				right->type = Type::errorType;
+				this->type = Type::errorType;
+			}
+			else{
+				this->type = left->getType();
+			}
+
+		}
+		else if(left->getType() == Type::errorType || right->getType() == Type::errorType) {
+			this->type = Type::errorType;
+		}
 	}
 
 	/*string unaryArr [] = {"++", "--", "+", "-"};
@@ -357,9 +371,13 @@ void EmptyExpr::Check() {
 }
 
 void ArrayAccess::Check() {
+	printf("Checking ArrayAccess Node\n");
+
         base->Check();
         subscript->Check();
         VarExpr* var = dynamic_cast<VarExpr*>(base);
+	ArrayType* arrT = dynamic_cast<ArrayType*>(base->type);
+	this->type = arrT->GetElemType();
 
         if(symtab->search_scope(string(var->GetIdentifier()->name)) == NULL) {
                 ReportError::NotAnArray(var->GetIdentifier());
