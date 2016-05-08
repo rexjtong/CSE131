@@ -422,6 +422,49 @@ void Call::PrintChildren(int indentLevel) {
 	if (actuals) actuals->PrintAll(indentLevel+1, "(actuals) ");
 }
 
+void FieldAccess::Check() {
+	printf("Checking FieldAccess Node\n");
+
+	if(base != NULL) {
+       		base->Check();
+	}
+}
+
+void Call::Check() {
+	this->type = Type::errorType;
+
+	if(base != NULL) {
+		base->Check();
+	}
+
+	Decl* decl = symtab->search_scope(string(field->name));
+	FnDecl* fndecl = dynamic_cast<FnDecl*>(decl);
+
+	if(fndecl == NULL) {
+		ReportError::NotAFunction(field);
+		return;
+	}
+
+	this->type = fndecl->GetType();
+
+	if(fndecl->GetFormals()->NumElements() > actuals->NumElements()) {
+		ReportError::LessFormals(field, fndecl->GetFormals()->NumElements(), actuals->NumElements());
+	}
+	else if(fndecl->GetFormals()->NumElements() < actuals->NumElements()) {
+		ReportError::ExtraFormals(field, fndecl->GetFormals()->NumElements(), actuals->NumElements());
+	}
+	else {
+		for(int i = 0; i < actuals->NumElements(); i++) {
+			actuals->Nth(i)->Check();
+			if(actuals->Nth(i)->getType() != fndecl->GetFormals()->Nth(i)->GetType()) {
+				ReportError::FormalsTypeMismatch(field, i+1, fndecl->GetFormals()->Nth(i)->GetType(), actuals->Nth(i)->getType());
+			}
+		}
+	}
+
+	
+}
+
 void RelationalExpr::Check() {
 	printf("Checking RelationalExpr Node\n");
 	this->type = Type::boolType;
