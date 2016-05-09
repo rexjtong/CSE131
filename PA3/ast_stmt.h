@@ -40,6 +40,7 @@ class Stmt : public Node
   public:
      Stmt() : Node() {}
      Stmt(yyltype loc) : Node(loc) {}
+     virtual void Check();
 };
 
 class StmtBlock : public Stmt 
@@ -184,6 +185,7 @@ class Case : public SwitchLabel
     Case() : SwitchLabel() {}
     Case(Expr *label, Stmt *stmt) : SwitchLabel(label, stmt) {}
     const char *GetPrintNameForNode() { return "Case"; }
+    virtual void Check();
 };
 
 class Default : public SwitchLabel
@@ -191,6 +193,7 @@ class Default : public SwitchLabel
   public:
     Default(Stmt *stmt) : SwitchLabel(stmt) {}
     const char *GetPrintNameForNode() { return "Default"; }
+    virtual void Check();
 };
 
 class SwitchStmt : public Stmt
@@ -205,6 +208,7 @@ class SwitchStmt : public Stmt
     SwitchStmt(Expr *expr, List<Stmt*> *cases, Default *def);
     virtual const char *GetPrintNameForNode() { return "SwitchStmt"; }
     void PrintChildren(int indentLevel);
+    virtual void Check();
 
 };
 

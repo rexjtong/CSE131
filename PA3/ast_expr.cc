@@ -18,7 +18,7 @@ IntConstant::IntConstant(yyltype loc, int val) : Expr(loc) {
 }
 
 void IntConstant::Check() {
-	printf("Checking IntConstant Node\n");
+	//printf("Checking IntConstant Node\n");
 
 	this->type = Type::intType;
 }
@@ -28,7 +28,7 @@ void IntConstant::PrintChildren(int indentLevel) {
 }
 
 void FloatConstant::Check() {
-	printf("Checking FloatConstant Node\n");
+	//printf("Checking FloatConstant Node\n");
 
 	this->type = Type::floatType;
 }
@@ -41,7 +41,7 @@ void FloatConstant::PrintChildren(int indentLevel) {
 }
 
 void BoolConstant::Check() {
-	printf("Checking BoolConstant Node\n");
+	//printf("Checking BoolConstant Node\n");
 
 	this->type = Type::boolType;
 }
@@ -56,7 +56,7 @@ void BoolConstant::PrintChildren(int indentLevel) {
 }
 
 void VarExpr::Check() {
-	printf("Checking VarExpr Node\n");
+	//printf("Checking VarExpr Node\n");
 
 	Decl* vardec = symtab->search_scope(string(this->id->name));
 	if (vardec == NULL) {
@@ -92,7 +92,7 @@ bool Operator::IsOp(const char *op) const {
 }
 
 void Operator::Check() {
-	printf("Checking Operator Node\n");
+	//printf("Checking Operator Node\n");
 
 	string opArr [] = {"++", "--", "-", "+", "*", "/", "==", "!=", "&&", "||", "?", ":", "+=", "-=", "*=", "/=", "<", "<=", ">=", ">"};
 
@@ -173,7 +173,7 @@ void CompoundExpr::PrintChildren(int indentLevel) {
 
 
 void ArithmeticExpr::Check() {
-	printf("Checking ArithmeticExpr Node\n");
+	//printf("Checking ArithmeticExpr Node\n");
 
 	
 	bool isUnary = false;
@@ -253,16 +253,16 @@ void ArithmeticExpr::Check() {
 }
 
 void ConditionalExpr::Check() {
-	printf("Checking ConditionalExpr Node\n");
+	//printf("Checking ConditionalExpr Node\n");
 	cond->Check();
 	trueExpr->Check();
 	falseExpr->Check();
 }
 
 void LogicalExpr::Check() {
-	printf("Checking LogicalExpr Node\n");
-	op->Check();
+	//printf("Checking LogicalExpr Node\n");
 	left->Check();
+	op->Check();
 	right->Check();
 
 	/*
@@ -306,7 +306,7 @@ void LogicalExpr::Check() {
 }
 
 void PostfixExpr::Check() {
-	printf("Checking PostfixExpr Node\n");
+	//printf("Checking PostfixExpr Node\n");
 	op->Check();
 	left->Check();
 	/**
@@ -338,9 +338,9 @@ void PostfixExpr::Check() {
 }
 
 void AssignExpr::Check() {
-	printf("Checking AssignExpr Node\n");
-	op->Check();
+	//printf("Checking AssignExpr Node\n");
 	left->Check();
+	op->Check();
 	right->Check();
 	if(left->getType() != Type::errorType && right->getType() != Type::errorType) {
 		if(left->getType() != right->getType()) {
@@ -371,7 +371,7 @@ void EmptyExpr::Check() {
 }
 
 void ArrayAccess::Check() {
-	printf("Checking ArrayAccess Node\n");
+	//printf("Checking ArrayAccess Node\n");
 
         base->Check();
         subscript->Check();
@@ -423,11 +423,71 @@ void Call::PrintChildren(int indentLevel) {
 }
 
 void FieldAccess::Check() {
-	printf("Checking FieldAccess Node\n");
+	//printf("Checking FieldAccess Node\n");
+	
+	this->type = Type::floatType;
 
 	if(base != NULL) {
        		base->Check();
 	}
+
+	if ((base->type != Type::vec2Type) && (base->type != Type::vec3Type) && (base->type != Type::vec4Type)) {
+		ReportError::InaccessibleSwizzle(field, base);
+		this->type = Type::errorType;
+		return;
+	}
+
+	string swiz = string(field->name);
+	for(int i = 0; i < swiz.size(); i++) {
+		if(swiz[i] == 'x') {
+			continue;
+		}
+		if(swiz[i] == 'y') {
+			continue;
+		}
+		if(swiz[i] == 'z') {
+			continue;
+		}
+		if(swiz[i] == 'w') {
+			continue;
+		}
+		ReportError::InvalidSwizzle(field, base);
+this->type = Type::errorType;
+		return;
+	}
+
+	if(base->type == Type::vec2Type) {
+		for(int i = 0; i < swiz.size(); i++) {
+			if(swiz[i] == 'z') {
+				ReportError::SwizzleOutOfBound(field, base);
+this->type = Type::errorType;
+				return;
+			}
+			if(swiz[i] == 'w') {
+				ReportError::SwizzleOutOfBound(field, base);
+this->type = Type::errorType;
+				return;
+			}
+
+		}
+	}
+
+	if(base->type == Type::vec3Type) {
+		for(int i = 0; i < swiz.size(); i++) {
+			if(swiz[i] == 'w') {
+				ReportError::SwizzleOutOfBound(field, base);
+this->type = Type::errorType;
+				return;
+			}
+		}
+	}
+
+	if (swiz.size() > 4) {
+		ReportError::OversizedVector(field, base);
+this->type = Type::errorType;
+	}
+
+
 }
 
 void Call::Check() {
@@ -438,7 +498,12 @@ void Call::Check() {
 	}
 
 	Decl* decl = symtab->search_scope(string(field->name));
-	FnDecl* fndecl = dynamic_cast<FnDecl*>(decl);
+
+	FnDecl* fndecl = NULL;
+
+	if(decl != NULL) {
+		fndecl = dynamic_cast<FnDecl*>(decl);
+	}
 
 	if(fndecl == NULL) {
 		ReportError::NotAFunction(field);
@@ -458,6 +523,7 @@ void Call::Check() {
 			actuals->Nth(i)->Check();
 			if(actuals->Nth(i)->getType() != fndecl->GetFormals()->Nth(i)->GetType()) {
 				ReportError::FormalsTypeMismatch(field, i+1, fndecl->GetFormals()->Nth(i)->GetType(), actuals->Nth(i)->getType());
+				return;
 			}
 		}
 	}
@@ -466,10 +532,10 @@ void Call::Check() {
 }
 
 void RelationalExpr::Check() {
-	printf("Checking RelationalExpr Node\n");
+	//printf("Checking RelationalExpr Node\n");
 	this->type = Type::boolType;
-	op->Check();
 	left->Check();
+	op->Check();
 	right->Check();
 	if(left->getType() != Type::errorType && right->getType() != Type::errorType) {
 		if((!left->getType()->IsNumeric()) && (!right->getType()->IsNumeric())) {

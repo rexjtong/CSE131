@@ -18,7 +18,7 @@
 import os
 from subprocess import *
 
-TEST_DIRECTORY = 'samples'
+TEST_DIRECTORY = 'public_samples'
 
 for _, _, files in os.walk(TEST_DIRECTORY):
   for file in files:

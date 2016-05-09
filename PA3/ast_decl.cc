@@ -13,7 +13,7 @@ Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
 }
 
 void VarDecl::Check() {
-	printf("Checking VarDecl Node\n");
+	//printf("Checking VarDecl Node\n");
 
 	if(assignTo != NULL) {
 		assignTo->Check();
@@ -60,18 +60,16 @@ void VarDecl::PrintChildren(int indentLevel) {
 }
 
 void FnDecl::Check() {
-	printf("Checking FnDecl Node\n");
+	//printf("Checking FnDecl Node\n");
 
 	symtab->add_decl(string(this->id->name), this);
 
 	List< VarDecl* > *forms = this->GetFormals();
 
-	
-
-
 	if(this->getBody() != NULL) {
 		symtab->foundReturn = false;
 		symtab->push_scope(SymbolTable::Function);
+		symtab->justLike = true;
 
 		for(int i = 0; i < forms->NumElements(); i++) { //Get all declarations in func and Check() them
 			forms->Nth(i)->Check();

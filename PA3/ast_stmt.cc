@@ -33,7 +33,7 @@ void Program::Check() {
 	// sample test - not the actual working code
 	// replace it with your own implementation
 	
-	printf("Checking Program Node\n");
+	//printf("Checking Program Node\n");
 
 	symtab->push_scope(SymbolTable::Global);	//global scope
 
@@ -50,15 +50,19 @@ void Program::Check() {
 		}
 	}
 
-	symtab->print_table();
+	//symtab->print_table();
 	symtab->pop_scope();	//pop global
 
 	
 }
 
+void Stmt::Check() {
+	symtab->justLike = false;
+}
+
 void StmtBlock::Check() {
 
-	printf("Checking StmtBlock Node\n");
+	//printf("Checking StmtBlock Node\n");
 
 	if(symtab->justLike) {
 		symtab->justLike = false;
@@ -118,14 +122,13 @@ void StmtBlock::Check() {
 				s->Check();
 			}
 		}
-
 		symtab->pop_scope();
 	}
 }
 
 
 void DeclStmt::Check() {
-	printf("Checking DeclStmt Node\n");
+	//printf("Checking DeclStmt Node\n");
 
 	decl->Check();
 
@@ -172,7 +175,7 @@ ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) {
 }
 
 void ForStmt::Check() {
-	printf("Checking ForStmt Node\n");
+	//printf("Checking ForStmt Node\n");
 
 
 	symtab->push_scope(SymbolTable::Loop);
@@ -213,7 +216,7 @@ void ForStmt::PrintChildren(int indentLevel) {
 }
 
 void WhileStmt::Check() {
-	printf("Checking WhileStmt Node\n");
+	//printf("Checking WhileStmt Node\n");
 
 	symtab->push_scope(SymbolTable::Loop);
 	symtab->justLike = true;
@@ -236,7 +239,7 @@ void WhileStmt::PrintChildren(int indentLevel) {
 }
 
 void IfStmt::Check() {
-	printf("Checking IfStmt Node\n");
+	//printf("Checking IfStmt Node\n");
 
 	symtab->push_scope(SymbolTable::Conditional);
 	symtab->justLike = true;
@@ -272,7 +275,7 @@ void IfStmt::PrintChildren(int indentLevel) {
 }
 
 void ReturnStmt::Check() {
-	printf("Checking ReturnStmt Node\n");
+	//printf("Checking ReturnStmt Node\n");
 	
 	symtab->foundReturn = true;
 
@@ -328,8 +331,39 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 	if (def) def->Print(indentLevel+1);
 }
 
+void SwitchStmt::Check() {
+	
+	symtab->push_scope(SymbolTable::Switch);
+	symtab->justLike = true;
+	
+	expr->Check();
+	
+	if (cases != NULL) {
+		for(int i = 0; i < cases->NumElements(); i++) {
+			cases->Nth(i)->Check();
+		}
+
+		if(def != NULL) {
+			def->Check();
+		}
+	}
+
+
+
+	symtab->pop_scope();
+}
+
+void Case::Check() {
+	label->Check();
+	stmt->Check();
+}
+
+void Default::Check() {
+	stmt->Check();
+}
+
 void BreakStmt::Check() {
-	printf("Checking BreakStmt Node\n");
+	//printf("Checking BreakStmt Node\n");
 
 	if(!symtab->is_in_loop() && !symtab->is_in_switch()) {
 		ReportError::BreakOutsideLoop(this);
@@ -337,7 +371,7 @@ void BreakStmt::Check() {
 }
 
 void ContinueStmt::Check() {
-	printf("Checking ContinueStmt Node\n");
+	//printf("Checking ContinueStmt Node\n");
 
 	if(!symtab->is_in_loop()) {
 		ReportError::ContinueOutsideLoop(this);
