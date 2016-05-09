@@ -54,6 +54,7 @@ void SymbolTable::pop_scope() {
 void SymbolTable::add_decl(string ident, Decl* dec) {
 	if(search_curr(ident) != NULL) {
 		ReportError::DeclConflict(dec, search_curr(ident));
+		symbolTable->at(currentScope).erase(ident);
 	}
 	symbolTable->at(currentScope).insert(pair<string, Decl*>(ident, dec));
 
@@ -109,6 +110,16 @@ Decl* SymbolTable::search_curr(string ident) {
 	}
 
 	return NULL;
+}
+
+Decl* SymbolTable::search_global(string ident) {
+	int num = symbolTable->at(0).count(ident);
+	if (num > 0) {
+		return symbolTable->at(0).at(ident);
+	}
+
+	return NULL;
+
 }
 
 FnDecl* SymbolTable::recentFunc() {

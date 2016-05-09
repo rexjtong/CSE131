@@ -52,7 +52,7 @@ BoolConstant::BoolConstant(yyltype loc, bool val) : Expr(loc) {
 	value = val;
 }
 void BoolConstant::PrintChildren(int indentLevel) { 
-	printf("%s", value ? "true" : "false");
+	//printf("%s", value ? "true" : "false");
 }
 
 void VarExpr::Check() {
@@ -126,44 +126,6 @@ CompoundExpr::CompoundExpr(Expr *l, Operator *o)
 		(op=o)->SetParent(this);
 	}
 
-/* void CompoundExpr::Check() {
-	string[] unaryArr = {"++", "--", "-", "+"};
-	string[] otherArr = {"+", "-", "*", "/", "==", "!=", "&&", "||", "?", ":", "+=", "-=", "*=", "/=", "<", "<=", ">=", ">"};
-
-	if(this->left == NULL) {
-		for(int i = 0; i < 4; i++){
-			if (op->IsOp(unaryArr[i])) {
-				this->right->Check();
-				if (this->right->GetType() == Type::floatType || this->right->GetType() == Type::intType) {
-					return;
-				}
-				else{
-					ReportError::IncompatibleOperand(op, right->GetType());
-					return;
-				}
-			}
-		}
-	}
-	else if(this->right == NULL) {
-		for(int i = 0; i < 4; i++){
-			if (op->IsOp(unaryArr[i])) {
-				this->left->Check();
-				if (this->left->GetType() == Type::floatType || this->left->GetType() == Type::intType) {
-					return;
-				}
-				else{
-					ReportError::IncompatibleOperand(op, left->GetType());
-					return;
-				}
-			}
-		}
-
-
-	}
-	else {
-		
-	}
-}*/
 
 void CompoundExpr::PrintChildren(int indentLevel) {
 	if (left) left->Print(indentLevel+1);
@@ -175,7 +137,7 @@ void CompoundExpr::PrintChildren(int indentLevel) {
 void ArithmeticExpr::Check() {
 	//printf("Checking ArithmeticExpr Node\n");
 
-	
+
 	bool isUnary = false;
 
 	if(left == NULL) {
@@ -188,7 +150,7 @@ void ArithmeticExpr::Check() {
 	if(!isUnary) {
 		left->Check();
 	}
-
+	this->type = Type::errorType;
 
 	Type* typeArr [] = {Type::intType, Type::floatType, Type::vec2Type, Type::vec3Type, Type::vec4Type, Type::mat2Type, Type::mat3Type, Type::mat4Type};
 	if(isUnary) {
@@ -199,18 +161,18 @@ void ArithmeticExpr::Check() {
 
 		for(int i = 0; i < 8; i++) {
 			if(right->getType() == typeArr[i]) {
+				this->type = right->getType();
 				return;	
 			}
 
 		}
 
-		//if(left->getType() 
 		ReportError::IncompatibleOperand(op, right->getType());
 		right->type = Type::errorType;
 		this->type = right->getType();
 
 	}
-	
+
 	else {
 		if(left->getType() != Type::errorType && right->getType() != Type::errorType) {
 			if(left->getType() != right->getType()) {
@@ -229,34 +191,23 @@ void ArithmeticExpr::Check() {
 		}
 	}
 
-	/*string unaryArr [] = {"++", "--", "+", "-"};
-	  string arithArr [] = {"+", "-", "*", "/"};
-
-	  if(isUnary) {
-	  for(int i = 0; i < 4; i++) {
-	  if (op->IsOp(arithArr[i].c_str())) {
-	  return;
-	  }
-	  }
-
-	  ReportError::IncompatibleOperand(op, right->getType());
-	  }
-	  else {
-	  for(int i = 0; i < 4; i++) {
-	  if (op->IsOp(arithArr[i].c_str())) {
-	  return;
-	  }
-	  }
-
-	  ReportError::IncompatibleOperands(op, left->getType(), right->getType());
-	  }*/
 }
 
 void ConditionalExpr::Check() {
 	//printf("Checking ConditionalExpr Node\n");
 	cond->Check();
+	if(cond->type != Type::boolType) {
+		ReportError::TestNotBoolean(cond);
+		cond->type = Type::errorType;
+	}
+	
+	
 	trueExpr->Check();
 	falseExpr->Check();
+	this->type = trueExpr->type;
+	if((trueExpr->type == Type::errorType) || (falseExpr->type == Type::errorType)){
+		this->type = Type::errorType;
+	}
 }
 
 void LogicalExpr::Check() {
@@ -265,58 +216,39 @@ void LogicalExpr::Check() {
 	op->Check();
 	right->Check();
 
-	/*
-	   string logicalArr [] = {"&&", "||"};
 
-	   for(int i = 0; i < 2; i++) {
-	   if (op->IsOp(logicalArr[i].c_str())) {
-	   return;
-	   }
-	   }*/
+	this->type = Type::boolType;
 
-	//	if(left->getType()->IsBool()) {
+	if((left->getType() != Type::errorType) && (right->getType() != Type::errorType)) {
+		if((left->getType() != Type::boolType) && (left->getType() != Type::errorType)) {
+			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+			this->type = Type::errorType;
+		}
 
-	//	}
-
-	//if((left->getType() != Type::boolType) || (right->getType() != Type::boolType)) {
-	//	ReportError::IncompatibleOperands(op, left->getType(), right->getType());
-	//}
-
-	if((left->getType() != Type::boolType) && (left->getType() != Type::errorType)) {
-		ReportError::IncompatibleOperands(op, left->getType(), right->getType());
-	}
-
-	else if((right->getType() != Type::boolType) && (right->getType() != Type::errorType)) {
-		ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+		else if((right->getType() != Type::boolType) && (right->getType() != Type::errorType)) {
+			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+			this->type = Type::errorType;
+		}
 	}
 
 	if(left->getType() != Type::boolType) {
 		left->type = Type::errorType;
+		this->type = Type::errorType;
 	}
 	if(right->getType() != Type::boolType) {
 		right->type = Type::errorType;
+		this->type = Type::errorType;
 	}
-	this->type = Type::boolType;
 
-	// ReportError::IncompatibleOperand(op, right->getType());
 
-	//	if(left->getType != Type::boolType) {
-
-	//	}
 }
 
 void PostfixExpr::Check() {
 	//printf("Checking PostfixExpr Node\n");
 	op->Check();
 	left->Check();
-	/**
-	  string postfixArr [] = {"++", "--"};
 
-	  for(int i = 0; i < 2; i++) {
-	  if (op->IsOp(postfixArr[i].c_str())) {
-	  return;
-	  }
-	  }*/
+	this->type = Type::errorType;
 
 	Type* typeArr [] = {Type::intType, Type::floatType, Type::vec2Type, Type::vec3Type, Type::vec4Type, Type::mat2Type, Type::mat3Type, Type::mat4Type};
 	if(left->getType() == Type::errorType) {
@@ -325,6 +257,7 @@ void PostfixExpr::Check() {
 
 	for(int i = 0; i < 8; i++) {
 		if(left->getType() == typeArr[i]) {
+			this->type = left->getType();
 			return;	
 		}
 
@@ -349,6 +282,7 @@ void AssignExpr::Check() {
 		}
 
 	}
+	this->type = left->getType();
 }
 
 ConditionalExpr::ConditionalExpr(Expr *c, Expr *t, Expr *f)
@@ -373,15 +307,34 @@ void EmptyExpr::Check() {
 void ArrayAccess::Check() {
 	//printf("Checking ArrayAccess Node\n");
 
-        base->Check();
-        subscript->Check();
-        VarExpr* var = dynamic_cast<VarExpr*>(base);
+	base->Check();
+	subscript->Check();
+	VarExpr* var = dynamic_cast<VarExpr*>(base);
 	ArrayType* arrT = dynamic_cast<ArrayType*>(base->type);
-	this->type = arrT->GetElemType();
 
-        if(symtab->search_scope(string(var->GetIdentifier()->name)) == NULL) {
-                ReportError::NotAnArray(var->GetIdentifier());
-        }
+	
+
+	if(base->type == Type::mat2Type) {
+		this->type = Type::vec2Type;
+	}
+	else if(base->type == Type::mat3Type) {
+		this->type = Type::vec3Type;
+	}
+	else if(base->type == Type::mat4Type) {
+		this->type = Type::vec4Type;
+	}
+	else if(arrT == NULL) {
+		this->type = Type::errorType;
+		ReportError::NotAnArray(var->GetIdentifier());
+	}
+	else {
+
+		this->type = arrT->GetElemType();
+
+		if(symtab->search_scope(string(var->GetIdentifier()->name)) == NULL) {
+			ReportError::NotAnArray(var->GetIdentifier());
+		}
+	}
 }
 
 ArrayAccess::ArrayAccess(yyltype loc,Expr *b, Expr *s) : LValue(loc) {
@@ -424,11 +377,11 @@ void Call::PrintChildren(int indentLevel) {
 
 void FieldAccess::Check() {
 	//printf("Checking FieldAccess Node\n");
-	
+
 	this->type = Type::floatType;
 
 	if(base != NULL) {
-       		base->Check();
+		base->Check();
 	}
 
 	if ((base->type != Type::vec2Type) && (base->type != Type::vec3Type) && (base->type != Type::vec4Type)) {
@@ -452,7 +405,7 @@ void FieldAccess::Check() {
 			continue;
 		}
 		ReportError::InvalidSwizzle(field, base);
-this->type = Type::errorType;
+		this->type = Type::errorType;
 		return;
 	}
 
@@ -460,12 +413,12 @@ this->type = Type::errorType;
 		for(int i = 0; i < swiz.size(); i++) {
 			if(swiz[i] == 'z') {
 				ReportError::SwizzleOutOfBound(field, base);
-this->type = Type::errorType;
+				this->type = Type::errorType;
 				return;
 			}
 			if(swiz[i] == 'w') {
 				ReportError::SwizzleOutOfBound(field, base);
-this->type = Type::errorType;
+				this->type = Type::errorType;
 				return;
 			}
 
@@ -476,7 +429,7 @@ this->type = Type::errorType;
 		for(int i = 0; i < swiz.size(); i++) {
 			if(swiz[i] == 'w') {
 				ReportError::SwizzleOutOfBound(field, base);
-this->type = Type::errorType;
+				this->type = Type::errorType;
 				return;
 			}
 		}
@@ -484,7 +437,7 @@ this->type = Type::errorType;
 
 	if (swiz.size() > 4) {
 		ReportError::OversizedVector(field, base);
-this->type = Type::errorType;
+		this->type = Type::errorType;
 	}
 
 
@@ -497,7 +450,12 @@ void Call::Check() {
 		base->Check();
 	}
 
-	Decl* decl = symtab->search_scope(string(field->name));
+	Decl* decl = symtab->search_global(string(field->name));
+
+	if(decl == NULL) {
+		ReportError::IdentifierNotDeclared(field, LookingForFunction);
+		return;
+	}
 
 	FnDecl* fndecl = NULL;
 
@@ -521,14 +479,26 @@ void Call::Check() {
 	else {
 		for(int i = 0; i < actuals->NumElements(); i++) {
 			actuals->Nth(i)->Check();
-			if(actuals->Nth(i)->getType() != fndecl->GetFormals()->Nth(i)->GetType()) {
-				ReportError::FormalsTypeMismatch(field, i+1, fndecl->GetFormals()->Nth(i)->GetType(), actuals->Nth(i)->getType());
+			Type *actualType = actuals->Nth(i)->getType();
+			//ArrayType *arrActualType = dynamic_cast<ArrayType*>(actualType);
+
+			Type *givenType = fndecl->GetFormals()->Nth(i)->GetType();
+			/*ArrayType *arrGivenType = dynamic_cast<ArrayType*>(givenType);
+
+			  if(arrActualType != NULL) {
+			  actualType = arrActualType->GetElemType();
+			  }
+			  if(arrGivenType != NULL) {
+			  givenType = arrGivenType->GetElemType();
+			  }*/
+			if(actualType != givenType) {
+				ReportError::FormalsTypeMismatch(field, i+1, givenType, actualType);
 				return;
 			}
 		}
 	}
 
-	
+
 }
 
 void RelationalExpr::Check() {
@@ -542,20 +512,45 @@ void RelationalExpr::Check() {
 			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
 			left->type = Type::errorType;
 			right->type = Type::errorType;
+			this->type = Type::errorType;
 		}
 		else if(!left->getType()->IsNumeric()) {
 			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
 			left->type = Type::errorType;
+			this->type = Type::errorType;
 		}
 		else if(!right->getType()->IsNumeric()) {
 			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
 			right->type = Type::errorType;
+			this->type = Type::errorType;
 		}
 		else if(right->getType() != left->getType()) {
 			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
 			right->type = Type::errorType;
 			left->type = Type::errorType;
+			this->type = Type::errorType;
 		}
 
+	}
+}
+
+void EqualityExpr::Check() {
+	//printf("Checking EqualityExpr Node\n");
+	this->type = Type::boolType;
+	left->Check();
+	op->Check();
+	right->Check();
+
+	if(left->getType() != Type::errorType && right->getType() != Type::errorType) {
+		if(right->getType() != left->getType()) {
+			ReportError::IncompatibleOperands(op, left->getType(), right->getType());
+			right->type = Type::errorType;
+			left->type = Type::errorType;
+			this->type = Type::errorType;
+		}
+
+	}
+	if((left->getType() == Type::errorType) || (right->getType() == Type::errorType)) {
+		this->type = Type::errorType;
 	}
 }

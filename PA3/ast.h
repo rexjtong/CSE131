@@ -43,6 +43,7 @@
 //#include "ast_decl.h"
 #include "location.h"
 #include <iostream>
+#include <cstdio>
 //#include "ast_decl.h"
 //#include "symtable.h"
 

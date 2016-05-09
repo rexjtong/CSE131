@@ -1,0 +1,9 @@
+When approaching this project, we started by implementing the symbol table.
+We added an enum which keeps track of all the possible types of Scopes we can encounter,
+a symbol table which is a stack (implemented using a vector) of maps keeping identifiers and declarations,
+and another stack (implemented using a vector) which keeps track of the Types of the Scopes we encounter using the enum described above.
+We also implemented methods for our symbol table to push and pop scopes, add declarations, and search for declarations/identifiers
+When semantically analyzing the given code, we would call check methods on objects encountered to make sure declarations were added to
+the symbol table, and to assign types. Often, when encountering an incorrect type, we would convert this object to an errorType to avoid
+unnecessary error cascading.
+To test and debug our code, we used various testing files, print statements/methods, and gdb.

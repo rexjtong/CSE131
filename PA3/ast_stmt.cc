@@ -28,11 +28,11 @@ void Program::Check() {
 	 *      and polymorphism in the node classes.
 	 */
 
-	
+
 
 	// sample test - not the actual working code
 	// replace it with your own implementation
-	
+
 	//printf("Checking Program Node\n");
 
 	symtab->push_scope(SymbolTable::Global);	//global scope
@@ -45,7 +45,7 @@ void Program::Check() {
 			 * Basically you have to make sure that each declaration is 
 			 * semantically correct.
 			 */
-			
+
 			d->Check();
 		}
 	}
@@ -53,7 +53,7 @@ void Program::Check() {
 	//symtab->print_table();
 	symtab->pop_scope();	//pop global
 
-	
+
 }
 
 void Stmt::Check() {
@@ -182,9 +182,9 @@ void ForStmt::Check() {
 	symtab->justLike = true;
 
 	init->Check();
-	
+
 	test->Check();
-	
+
 	if(!test->type->IsBool()) {
 		ReportError::TestNotBoolean(test);
 		test->type = Type::errorType;
@@ -193,7 +193,7 @@ void ForStmt::Check() {
 	if(step != NULL) {
 		step->Check();
 	}
-	
+
 	body->Check();
 
 	symtab->pop_scope();
@@ -252,6 +252,8 @@ void IfStmt::Check() {
 	}
 
 	body->Check();
+	symtab->pop_scope();
+	symtab->push_scope(SymbolTable::Conditional);
 
 	if(elseBody != NULL) {
 		elseBody->Check();
@@ -276,16 +278,22 @@ void IfStmt::PrintChildren(int indentLevel) {
 
 void ReturnStmt::Check() {
 	//printf("Checking ReturnStmt Node\n");
-	
+
 	symtab->foundReturn = true;
 
 	FnDecl* func = symtab->recentFunc();
 
 	if(expr != NULL) {
+
 		expr->Check();
 
-		if(func->GetType() != expr->getType()) {
+		if((func->GetType() != expr->getType()) && (expr->getType() != Type::errorType)) {
 			ReportError::ReturnMismatch(this, expr->getType(), func->GetType());
+		}
+	}
+	else {
+		if(func->GetType() != Type::voidType) {
+			ReportError::ReturnMismatch(this, Type::voidType, func->GetType());
 		}
 	}
 }
@@ -332,12 +340,12 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 void SwitchStmt::Check() {
-	
+
 	symtab->push_scope(SymbolTable::Switch);
-	symtab->justLike = true;
-	
+	//symtab->justLike = true;
+
 	expr->Check();
-	
+
 	if (cases != NULL) {
 		for(int i = 0; i < cases->NumElements(); i++) {
 			cases->Nth(i)->Check();

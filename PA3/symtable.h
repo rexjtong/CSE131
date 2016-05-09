@@ -54,7 +54,9 @@ class SymbolTable {
 		bool is_in_loop();
 		bool is_in_switch();
 		Decl* search_curr(string ident);
+		Decl* search_global(string ident);
 		FnDecl* recentFunc();
+
 
 
 };
