@@ -6,6 +6,7 @@
 #include "ast_type.h"
 #include "ast_decl.h"
 #include "symtable.h"
+#include "irgen.h"
 #include <string.h> // strdup
 #include <stdio.h>  // printf
 
@@ -27,6 +28,11 @@ Node::Node() {
  * virtual function PrintChildren which is expected to print the
  * internals of the node (itself & children) as appropriate.
  */
+
+SymbolTable *Node::symtab = new SymbolTable();
+IRGenerator *Node::irgen = new IRGenerator();
+
+
 void Node::Print(int indentLevel, const char *label) { 
     const int numSpaces = 3;
     printf("\n");

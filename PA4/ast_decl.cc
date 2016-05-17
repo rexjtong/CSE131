@@ -6,22 +6,39 @@
 #include "ast_type.h"
 #include "ast_stmt.h"
 #include "symtable.h"        
+#include "irgen.h"
          
 Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
     Assert(n != NULL);
     (id=n)->SetParent(this); 
 }
 
+void VarDecl::Emit() {
+	//printf("Emitting VarDecl Node\n");
+
+	if(symtab->is_global()) {
+		if(GetAssign() != NULL) {
+			//TODO false parameter here?? Const keyword??
+			llvm::GlobalVariable gVar = new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), IRGenerator::ast_llvm(GetType(), irgen->GetContext()), false, llvm::GlobalValue::ExternalLinkage, GetAssign(), id->GetName());
+		}
+		else {
+			llvm::GlobalVariable gVar = new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), IRGenerator::ast_llvm(GetType(), irgen->GetContext()), false, llvm::GlobalValue::ExternalLinkage, llvm::Constant::getNullValue(), id->GetName());
+		}
+	}
+
+	//symtab->add_decl(strng(this->id->name)
+}
+
 VarDecl::VarDecl(Identifier *n, Type *t, Expr *e) : Decl(n) {
-    Assert(n != NULL && t != NULL);
-    (type=t)->SetParent(this);
-    if (e) (assignTo=e)->SetParent(this);
-    typeq = NULL;
+	Assert(n != NULL && t != NULL);
+	(type=t)->SetParent(this);
+	if (e) (assignTo=e)->SetParent(this);
+	typeq = NULL;
 }
 
 VarDecl::VarDecl(Identifier *n, TypeQualifier *tq, Expr *e) : Decl(n) {
-    Assert(n != NULL && tq != NULL);
-    (typeq=tq)->SetParent(this);
+	Assert(n != NULL && tq != NULL);
+	(typeq=tq)->SetParent(this);
     if (e) (assignTo=e)->SetParent(this);
     type = NULL;
 }

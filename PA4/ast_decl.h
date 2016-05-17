@@ -53,6 +53,8 @@ class VarDecl : public Decl
     const char *GetPrintNameForNode() { return "VarDecl"; }
     void PrintChildren(int indentLevel);
     Type *GetType() const { return type; }
+    Expr *GetAssign() const { return assignTo; }
+    virtual void Emit();
 };
 
 class VarDeclError : public VarDecl

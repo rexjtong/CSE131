@@ -8,6 +8,7 @@
 #include "ast_type.h"
 #include "ast_decl.h"
 #include "symtable.h"
+#include "irgen.h"
 
 IntConstant::IntConstant(yyltype loc, int val) : Expr(loc) {
     value = val;

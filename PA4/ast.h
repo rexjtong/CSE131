@@ -40,12 +40,17 @@
 #include <stdlib.h>   // for NULL
 #include "location.h"
 #include <iostream>
+//#include "irgen.h"
+//#include "llvm/Bitcode/ReaderWriter.h"
+//#include "llvm/Support/raw_ostream.h"
+//#include "symtable.h"
 
 using namespace std;
 
 class SymbolTable;
 class MyStack;
 class FnDecl;
+class IRGenerator;
 
 class Node  {
   protected:
@@ -53,6 +58,8 @@ class Node  {
     Node *parent;
 
   public:
+    static SymbolTable *symtab;
+    static IRGenerator* irgen;
     Node(yyltype loc);
     Node();
     virtual ~Node() {}
