@@ -16,6 +16,10 @@
 #include "ast.h"
 #include "list.h"
 #include "ast_expr.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Constants.h"
 
 class Type;
 class TypeQualifier;
@@ -54,7 +58,7 @@ class VarDecl : public Decl
     void PrintChildren(int indentLevel);
     Type *GetType() const { return type; }
     Expr *GetAssign() const { return assignTo; }
-    virtual void Emit();
+    virtual llvm::Value* Emit();
 };
 
 class VarDeclError : public VarDecl

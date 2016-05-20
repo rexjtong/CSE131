@@ -13,20 +13,27 @@ Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
     (id=n)->SetParent(this); 
 }
 
-void VarDecl::Emit() {
-	//printf("Emitting VarDecl Node\n");
+llvm::Value* VarDecl::Emit() {
+	// printf("Emitting VarDecl Node\n");
+	llvm::Value* value = NULL;
+	
+	if(GetAssign() != NULL) {
+		value = GetAssign()->Emit();
+	}
+	else{
+		value = llvm::Constant::getNullValue(irgen->ast_llvm(GetType(), irgen->GetContext()));
+	}
+	
+	llvm::Constant* constant = dynamic_cast<llvm::Constant*>(value);
 
 	if(symtab->is_global()) {
-		if(GetAssign() != NULL) {
-			//TODO false parameter here?? Const keyword??
-			llvm::GlobalVariable gVar = new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), IRGenerator::ast_llvm(GetType(), irgen->GetContext()), false, llvm::GlobalValue::ExternalLinkage, GetAssign(), id->GetName());
-		}
-		else {
-			llvm::GlobalVariable gVar = new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), IRGenerator::ast_llvm(GetType(), irgen->GetContext()), false, llvm::GlobalValue::ExternalLinkage, llvm::Constant::getNullValue(), id->GetName());
-		}
+		//TODO false parameter here?? Const keyword??
+		llvm::GlobalVariable* gVar = new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), irgen->ast_llvm(GetType(), irgen->GetContext()), true, llvm::GlobalValue::ExternalLinkage, constant, id->GetName());
+
+		// irgen->GetOrCreateModule("Program_Module.bc")->getOrInsertGlobal(id->GetName
 	}
 
-	//symtab->add_decl(strng(this->id->name)
+	return NULL;
 }
 
 VarDecl::VarDecl(Identifier *n, Type *t, Expr *e) : Decl(n) {
@@ -39,13 +46,13 @@ VarDecl::VarDecl(Identifier *n, Type *t, Expr *e) : Decl(n) {
 VarDecl::VarDecl(Identifier *n, TypeQualifier *tq, Expr *e) : Decl(n) {
 	Assert(n != NULL && tq != NULL);
 	(typeq=tq)->SetParent(this);
-    if (e) (assignTo=e)->SetParent(this);
-    type = NULL;
+	if (e) (assignTo=e)->SetParent(this);
+	type = NULL;
 }
 
 VarDecl::VarDecl(Identifier *n, Type *t, TypeQualifier *tq, Expr *e) : Decl(n) {
-    Assert(n != NULL && t != NULL && tq != NULL);
-    (type=t)->SetParent(this);
+	Assert(n != NULL && t != NULL && tq != NULL);
+	(type=t)->SetParent(this);
     (typeq=tq)->SetParent(this);
     if (e) (assignTo=e)->SetParent(this);
 }

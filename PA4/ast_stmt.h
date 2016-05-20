@@ -15,6 +15,11 @@
 
 #include "list.h"
 #include "ast.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Constants.h"
+
 
 class Decl;
 class VarDecl;
@@ -32,7 +37,7 @@ class Program : public Node
      Program(List<Decl*> *declList);
      const char *GetPrintNameForNode() { return "Program"; }
      void PrintChildren(int indentLevel);
-     virtual void Emit();
+     virtual llvm::Value* Emit();
 };
 
 class Stmt : public Node

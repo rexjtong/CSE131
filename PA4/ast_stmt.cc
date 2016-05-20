@@ -23,8 +23,8 @@ void Program::PrintChildren(int indentLevel) {
 	printf("\n");
 }
 
-void Program::Emit() {
-
+llvm::Value* Program::Emit() {
+	// printf("Emitting Program node");
 	//IRGenerator irgen;
 	llvm::Module *mod = irgen->GetOrCreateModule("Program_Module.bc");
 
@@ -32,7 +32,7 @@ void Program::Emit() {
 
 	if ( decls->NumElements() > 0 ) {
 
-		for(int i = 0; decls->NumElements(); ++i) {
+		for(int i = 0; i < decls->NumElements(); ++i) {
 			Decl *d = decls->Nth(i);
 			d->Emit();
 		}
@@ -40,6 +40,8 @@ void Program::Emit() {
 	}
 
 	symtab->pop_scope();
+
+	return NULL;
 
 	/*// TODO:
 	// This is just a reference for you to get started

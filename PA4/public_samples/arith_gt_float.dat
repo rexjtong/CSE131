@@ -1,0 +1,3 @@
+funct: arith
+gin: x, float, 19
+gin: y, float, 2.5

@@ -1,0 +1,3 @@
+funct: arith
+gin: x, int, 10
+gin: y, int, 3

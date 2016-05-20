@@ -40,6 +40,11 @@
 #include <stdlib.h>   // for NULL
 #include "location.h"
 #include <iostream>
+#include "llvm/IR/Module.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Constants.h"
+
 //#include "irgen.h"
 //#include "llvm/Bitcode/ReaderWriter.h"
 //#include "llvm/Support/raw_ostream.h"
@@ -75,7 +80,7 @@ class Node  {
     void Print(int indentLevel, const char *label = NULL); 
     virtual void PrintChildren(int indentLevel)  {}
 
-    virtual void Emit() {}
+    virtual llvm::Value* Emit() {return NULL;}
 };
    
 
