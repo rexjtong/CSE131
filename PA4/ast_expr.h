@@ -27,6 +27,8 @@ void yyerror(const char *msg);
 class Expr : public Stmt 
 {
   public:
+    Type* type;
+    Type* GetType() {return type;}
     Expr(yyltype loc) : Stmt(loc) {}
     Expr() : Stmt() {}
     virtual llvm::Type* EmitType() {return NULL;}
@@ -140,6 +142,7 @@ class ArithmeticExpr : public CompoundExpr
     ArithmeticExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     ArithmeticExpr(Operator *op, Expr *rhs) : CompoundExpr(op,rhs) {}
     const char *GetPrintNameForNode() { return "ArithmeticExpr"; }
+    virtual llvm::Value* Emit();
 };
 
 class RelationalExpr : public CompoundExpr 
@@ -147,6 +150,7 @@ class RelationalExpr : public CompoundExpr
   public:
     RelationalExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     const char *GetPrintNameForNode() { return "RelationalExpr"; }
+    virtual llvm::Value* Emit();
 };
 
 class EqualityExpr : public CompoundExpr 

@@ -11,6 +11,7 @@
 #include "irgen.h"
 
 llvm::Value* IntConstant::Emit() {
+	this->type = Type::intType;
 	llvm::LLVMContext* context = irgen->GetContext();
 	llvm::Value* val = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context), GetValue());
 	
@@ -29,6 +30,7 @@ void IntConstant::PrintChildren(int indentLevel) {
 }
 
 llvm::Value* FloatConstant::Emit() {
+	this->type = Type::floatType;
 	llvm::LLVMContext* context = irgen->GetContext();
 	llvm::Value* val = llvm::ConstantFP::get(llvm::Type::getFloatTy(*context), GetValue());
 	
@@ -47,6 +49,7 @@ void FloatConstant::PrintChildren(int indentLevel) {
 }
 
 llvm::Value* BoolConstant::Emit() {
+	this->type = Type::boolType;
 	llvm::LLVMContext* context = irgen->GetContext();
 	llvm::Value* val = llvm::ConstantInt::get(llvm::Type::getInt1Ty(*context), (int) GetValue());
 	
@@ -96,6 +99,142 @@ void Operator::PrintChildren(int indentLevel) {
 
 bool Operator::IsOp(const char *op) const {
     return strcmp(tokenString, op) == 0;
+}
+
+llvm::Value* RelationalExpr::Emit() {
+	left->Emit();
+	right->Emit();
+
+	if(left->GetType() == Type::intType && right->GetType() == Type::intType) {
+		this->type = Type::intType;
+		llvm::CmpInst::Predicate pred;
+	
+		if(op->IsOp(">")) {
+			pred = llvm::ICmpInst::ICMP_SGT;
+			
+			llvm::CmpInst::Create(llvm::CmpInst::ICmp, pred, left->Emit(), right->Emit(), "IG", irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("<")) {
+			pred = llvm::ICmpInst::ICMP_SLT;
+
+			llvm::CmpInst::Create(llvm::CmpInst::ICmp, pred, left->Emit(), right->Emit(), "IL", irgen->GetBasicBlock());
+		}
+		else if(op->IsOp(">=")) {
+			pred = llvm::ICmpInst::ICMP_SGE;
+
+			llvm::CmpInst::Create(llvm::CmpInst::ICmp, pred, left->Emit(), right->Emit(), "IGE", irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("<=")) {
+			pred = llvm::ICmpInst::ICMP_SLE;	
+
+			llvm::CmpInst::Create(llvm::CmpInst::ICmp, pred, left->Emit(), right->Emit(), "ILE", irgen->GetBasicBlock());
+		}
+		
+	}
+	else if(left->GetType() == Type::floatType && right->GetType() == Type::floatType) {
+		this->type = Type::floatType;
+		llvm::CmpInst::Predicate pred;
+	
+		if(op->IsOp(">")) {
+			pred = llvm::FCmpInst::FCMP_OGT;
+
+			llvm::CmpInst::Create(llvm::CmpInst::FCmp, pred, left->Emit(), right->Emit(), "FG", irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("<")) {
+			pred = llvm::FCmpInst::FCMP_OLT;
+
+			llvm::CmpInst::Create(llvm::CmpInst::FCmp, pred, left->Emit(), right->Emit(), "FL", irgen->GetBasicBlock());
+		}
+		else if(op->IsOp(">=")) {
+			pred = llvm::FCmpInst::FCMP_OGE;
+
+			llvm::CmpInst::Create(llvm::CmpInst::FCmp, pred, left->Emit(), right->Emit(), "FGE", irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("<=")) {
+			pred = llvm::FCmpInst::FCMP_OLE;
+
+			llvm::CmpInst::Create(llvm::CmpInst::FCmp, pred, left->Emit(), right->Emit(), "FLE", irgen->GetBasicBlock());
+		}
+	}
+
+	return NULL;
+}
+
+llvm::Value* ArithmeticExpr::Emit() {
+	if(right->GetType() == Type::intType) {
+		if(left == NULL) {
+			right->Emit();
+	
+			if(op->IsOp("++")) {
+				llvm::Value *val = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+				llvm::BinaryOperator::CreateAdd(right->Emit(), val, "IInc", irgen->GetBasicBlock());
+			}
+			else if(op->IsOp("--")) {
+				llvm::Value *val = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+				llvm::BinaryOperator::CreateSub(right->Emit(), val, "IDec", irgen->GetBasicBlock());
+			}
+			else if(op->IsOp("+")) {
+	
+			}
+			else if(op->IsOp("-")) {
+	
+			}
+		}
+		else if(left != NULL) {
+			left->Emit();
+			right->Emit();
+	
+			if(op->IsOp("+")) {
+	
+			}
+			else if(op->IsOp("-")) {
+	
+			}
+			else if(op->IsOp("*")) {
+	
+			}
+			else if(op->IsOp("/")) {
+	
+			}
+		}
+	}
+	else if(right->GetType() == Type::floatType) {
+		if(left == NULL) {
+			right->Emit();
+	
+			if(op->IsOp("++")) {
+	
+			}
+			else if(op->IsOp("--")) {
+	
+			}
+			else if(op->IsOp("+")) {
+	
+			}
+			else if(op->IsOp("-")) {
+	
+			}
+		}
+		else if(left != NULL) {
+			left->Emit();
+			right->Emit();
+	
+			if(op->IsOp("+")) {
+	
+			}
+			else if(op->IsOp("-")) {
+	
+			}
+			else if(op->IsOp("*")) {
+	
+			}
+			else if(op->IsOp("/")) {
+	
+			}
+		}
+	}
+
+	return NULL;
 }
 
 CompoundExpr::CompoundExpr(Expr *l, Operator *o, Expr *r) 
