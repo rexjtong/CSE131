@@ -17,6 +17,10 @@
 #include "ast_stmt.h"
 #include "list.h"
 #include "ast_type.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Constants.h"
 
 void yyerror(const char *msg);
 
@@ -25,6 +29,7 @@ class Expr : public Stmt
   public:
     Expr(yyltype loc) : Stmt(loc) {}
     Expr() : Stmt() {}
+    virtual llvm::Type* EmitType() {return NULL;}
 
     friend std::ostream& operator<< (std::ostream& stream, Expr * expr) {
         return stream << expr->GetPrintNameForNode();
@@ -45,6 +50,8 @@ class EmptyExpr : public Expr
 {
   public:
     const char *GetPrintNameForNode() { return "Empty"; }
+    // virtual llvm::Type* EmitType();
+    // virtual llvm::Value* Emit();
 };
 
 class IntConstant : public Expr 
@@ -56,6 +63,9 @@ class IntConstant : public Expr
     IntConstant(yyltype loc, int val);
     const char *GetPrintNameForNode() { return "IntConstant"; }
     void PrintChildren(int indentLevel);
+    int GetValue() {return value;}
+    virtual llvm::Type* EmitType();
+    virtual llvm::Value* Emit();
 };
 
 class FloatConstant: public Expr 
@@ -67,6 +77,9 @@ class FloatConstant: public Expr
     FloatConstant(yyltype loc, double val);
     const char *GetPrintNameForNode() { return "FloatConstant"; }
     void PrintChildren(int indentLevel);
+    double GetValue() {return value;}
+    virtual llvm::Type* EmitType();
+    virtual llvm::Value* Emit();
 };
 
 class BoolConstant : public Expr 
@@ -78,6 +91,9 @@ class BoolConstant : public Expr
     BoolConstant(yyltype loc, bool val);
     const char *GetPrintNameForNode() { return "BoolConstant"; }
     void PrintChildren(int indentLevel);
+    bool GetValue() {return value;}
+    virtual llvm::Type* EmitType();
+    virtual llvm::Value* Emit();
 };
 
 class VarExpr : public Expr

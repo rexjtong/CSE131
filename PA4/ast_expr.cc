@@ -10,11 +10,33 @@
 #include "symtable.h"
 #include "irgen.h"
 
+llvm::Value* IntConstant::Emit() {
+	llvm::LLVMContext* context = irgen->GetContext();
+	llvm::Value* val = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context), GetValue());
+	
+	return val;
+}
+
+llvm::Type* IntConstant::EmitType() {
+	return irgen->ast_llvm(Type::intType, irgen->GetContext());
+}
+
 IntConstant::IntConstant(yyltype loc, int val) : Expr(loc) {
     value = val;
 }
 void IntConstant::PrintChildren(int indentLevel) { 
     printf("%d", value);
+}
+
+llvm::Value* FloatConstant::Emit() {
+	llvm::LLVMContext* context = irgen->GetContext();
+	llvm::Value* val = llvm::ConstantFP::get(llvm::Type::getFloatTy(*context), GetValue());
+	
+	return val;
+}
+
+llvm::Type* FloatConstant::EmitType() {
+	return irgen->ast_llvm(Type::floatType, irgen->GetContext());
 }
 
 FloatConstant::FloatConstant(yyltype loc, double val) : Expr(loc) {
@@ -24,12 +46,35 @@ void FloatConstant::PrintChildren(int indentLevel) {
     printf("%g", value);
 }
 
+llvm::Value* BoolConstant::Emit() {
+	llvm::LLVMContext* context = irgen->GetContext();
+	llvm::Value* val = llvm::ConstantInt::get(llvm::Type::getInt1Ty(*context), (int) GetValue());
+	
+	return val;
+}
+
+llvm::Type* BoolConstant::EmitType() {
+	return irgen->ast_llvm(Type::boolType, irgen->GetContext());
+}
+
 BoolConstant::BoolConstant(yyltype loc, bool val) : Expr(loc) {
     value = val;
 }
 void BoolConstant::PrintChildren(int indentLevel) { 
     printf("%s", value ? "true" : "false");
 }
+
+/*
+llvm::Value* EmptyExpr::Emit() {
+	llvm::LLVMContext* context = irgen->GetContext();
+	llvm::Value* val = llvm::Constant::getVoidTy();
+	
+	return val;
+}
+
+llvm::Type* EmptyExpr::EmitType() {
+	return irgen->ast_llvm(Type::voidType, irgen->GetContext());
+}*/
 
 VarExpr::VarExpr(yyltype loc, Identifier *ident) : Expr(loc) {
     Assert(ident != NULL);

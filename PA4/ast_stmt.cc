@@ -10,7 +10,7 @@
 
 #include "irgen.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Support/raw_ostream.h"                                                   
+#include "llvm/Support/raw_ostream.h"
 
 
 Program::Program(List<Decl*> *d) {
@@ -30,6 +30,9 @@ llvm::Value* Program::Emit() {
 
 	symtab->push_scope(SymbolTable::Global);
 
+	//BasicBlock* globalBlock = BasicBlock::Create(irgen->GetContext(), "Global");
+	irgen->SetBasicBlock(llvm::BasicBlock::Create(*irgen->GetContext(), "Global"));
+
 	if ( decls->NumElements() > 0 ) {
 
 		for(int i = 0; i < decls->NumElements(); ++i) {
@@ -40,6 +43,8 @@ llvm::Value* Program::Emit() {
 	}
 
 	symtab->pop_scope();
+
+	llvm::WriteBitcodeToFile(mod, llvm::outs());
 
 	return NULL;
 

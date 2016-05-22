@@ -16,6 +16,7 @@ Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
 llvm::Value* VarDecl::Emit() {
 	// printf("Emitting VarDecl Node\n");
 	llvm::Value* value = NULL;
+	llvm::AllocaInst* inst = NULL;
 	
 	if(GetAssign() != NULL) {
 		value = GetAssign()->Emit();
@@ -27,13 +28,15 @@ llvm::Value* VarDecl::Emit() {
 	llvm::Constant* constant = dynamic_cast<llvm::Constant*>(value);
 
 	if(symtab->is_global()) {
-		//TODO false parameter here?? Const keyword??
-		llvm::GlobalVariable* gVar = new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), irgen->ast_llvm(GetType(), irgen->GetContext()), true, llvm::GlobalValue::ExternalLinkage, constant, id->GetName());
-
-		// irgen->GetOrCreateModule("Program_Module.bc")->getOrInsertGlobal(id->GetName
+		new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), irgen->ast_llvm(GetType(), irgen->GetContext()), true, llvm::GlobalValue::ExternalLinkage, constant, id->GetName());
+	}
+	else {
+		inst = new llvm::AllocaInst(irgen->ast_llvm(GetType(), irgen->GetContext()),id->GetName(), irgen->GetBasicBlock());
+		
+		// new llvm::StoreInst(value, , irgen->GetBasicBlock());
 	}
 
-	return NULL;
+	return inst;
 }
 
 VarDecl::VarDecl(Identifier *n, Type *t, Expr *e) : Decl(n) {
@@ -62,6 +65,35 @@ void VarDecl::PrintChildren(int indentLevel) {
    if (type) type->Print(indentLevel+1);
    if (id) id->Print(indentLevel+1);
    if (assignTo) assignTo->Print(indentLevel+1, "(initializer) ");
+}
+
+llvm::Value* FnDecl::Emit() {
+	std::vector<llvm::Type*> argTypes;
+
+	for(int i = 0; i < formals->NumElements(); i++) {
+		formals->Nth(i)->Emit();
+	
+		argTypes.push_back(irgen->ast_llvm(formals->Nth(i)->GetType(), irgen->GetContext()));
+	}
+
+	llvm::ArrayRef<llvm::Type*> argArray(argTypes);
+	llvm::FunctionType* funcTy = llvm::FunctionType::get(irgen->ast_llvm(GetType(), irgen->GetContext()), argArray, false);
+
+	llvm::Function *f = llvm::cast<llvm::Function>(irgen->GetOrCreateModule("Program_Module.bc")->getOrInsertFunction(GetIdentifier()->GetName(), funcTy));
+
+	int i = 0;
+
+	for(llvm::Function::arg_iterator args = f->arg_begin(); args != f->arg_end(); args++) {
+		args->setName(formals->Nth(i)->GetIdentifier()->GetName());
+
+		i++;
+	}
+
+	irgen->SetBasicBlock(llvm::BasicBlock::Create(*irgen->GetContext(), "Function"));
+
+	body->Emit();
+
+	return NULL;
 }
 
 FnDecl::FnDecl(Identifier *n, Type *r, List<VarDecl*> *d) : Decl(n) {

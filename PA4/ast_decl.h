@@ -83,6 +83,7 @@ class FnDecl : public Decl
     void SetFunctionBody(Stmt *b);
     const char *GetPrintNameForNode() { return "FnDecl"; }
     void PrintChildren(int indentLevel);
+    virtual llvm::Value* Emit();
 
     Type *GetType() const { return returnType; }
     List<VarDecl*> *GetFormals() {return formals;}
