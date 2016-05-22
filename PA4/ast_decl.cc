@@ -89,9 +89,10 @@ llvm::Value* FnDecl::Emit() {
 		i++;
 	}
 
-	irgen->SetBasicBlock(llvm::BasicBlock::Create(*irgen->GetContext(), "Function"));
-
-	body->Emit();
+	if( body != NULL ) {
+		irgen->SetBasicBlock(llvm::BasicBlock::Create(*irgen->GetContext(), "Function"));
+		body->Emit();
+	}
 
 	return NULL;
 }

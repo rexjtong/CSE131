@@ -90,9 +90,8 @@ StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
 
 llvm::Value* StmtBlock::Emit() {
 
-	IRGenerator irgen;
-	llvm::LLVMContext *context = irgen.GetContext();
-	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, GetPrintNameForNode());
+	llvm::LLVMContext *context = irgen->GetContext();
+	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Stmt Block");
 
 	if( decls->NumElements() > 0 ) {
 		for ( int i = 0; i < decls->NumElements(); ++i) {
@@ -135,8 +134,40 @@ ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) {
 }
 
 llvm::Value* IfStmt::Emit() {
-	test->Emit();
-	body->Emit();
+	llvm::LLVMContext *context = irgen->GetContext();
+	llvm::BasicBlock *eb;
+
+	llvm::Value* testVal = test->Emit();
+
+	llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Footer block");
+
+	if(elseBody != NULL) {
+		eb = llvm::BasicBlock::Create(*context, "Else block");
+	}
+
+	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Then block");
+
+	if(elseBody != NULL) {
+		llvm::BranchInst::Create(bb, eb, testVal, irgen->GetBasicBlock());
+	}
+
+	else {
+		llvm::BranchInst::Create(bb, fb, testVal, irgen->GetBasicBlock());
+	}
+	
+	irgen->SetBasicBlock(bb);
+	llvm::Value* bodyVal = body->Emit();
+	llvm::BranchInst::Create(fb, bb);
+
+	if(elseBody != NULL) {
+		irgen->SetBasicBlock(eb);
+		llvm::Value* bodyVal = elseBody->Emit();
+
+		llvm::BranchInst::Create(fb, eb);
+	}
+
+	irgen->SetBasicBlock(fb);
+
 	return NULL;
 }
 
@@ -156,9 +187,55 @@ void ForStmt::PrintChildren(int indentLevel) {
 	body->Print(indentLevel+1, "(body) ");
 }
 
+llvm::Value* ForStmt::Emit() {
+	llvm::LLVMContext *context = irgen->GetContext();
+	llvm::BasicBlock *hb = llvm::BasicBlock::Create(*context, "Header block");
+	llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Footer block");
+	llvm::BasicBlock *sb = llvm::BasicBlock::Create(*context, "Step block");
+	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Body block");
+
+	init->Emit();
+	llvm::BranchInst::Create(hb, irgen->GetBasicBlock());
+
+	irgen->SetBasicBlock(hb);
+	llvm::Value* testVal = test->Emit();
+	llvm::BranchInst::Create(bb, fb, testVal, hb);
+
+	irgen->SetBasicBlock(bb);
+	body->Emit();
+	llvm::BranchInst::Create(sb, bb);
+	irgen->SetBasicBlock(sb);
+	step->Emit();
+	llvm::BranchInst::Create(hb, sb);
+
+
+	return NULL;
+
+}
+
 void WhileStmt::PrintChildren(int indentLevel) {
 	test->Print(indentLevel+1, "(test) ");
 	body->Print(indentLevel+1, "(body) ");
+}
+
+llvm::Value* WhileStmt::Emit() {
+	llvm::LLVMContext *context = irgen->GetContext();
+	llvm::BasicBlock *hb = llvm::BasicBlock::Create(*context, "Header block");
+	llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Footer block");
+	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Body block");
+
+	llvm::BranchInst::Create(hb, irgen->GetBasicBlock());
+
+	irgen->SetBasicBlock(hb);
+	llvm::Value* testVal = test->Emit();
+	llvm::BranchInst::Create(bb, fb, testVal, hb);
+
+	irgen->SetBasicBlock(bb);
+	body->Emit();
+	llvm::BranchInst::Create(hb, bb);
+
+	return NULL;
+
 }
 
 IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) { 
@@ -182,6 +259,15 @@ ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) {
 void ReturnStmt::PrintChildren(int indentLevel) {
 	if ( expr ) 
 		expr->Print(indentLevel+1);
+}
+
+llvm::Value* ReturnStmt::Emit() {
+	llvm::LLVMContext *context = irgen->GetContext();
+	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Return Statement");
+	llvm::Value* retVal = expr->Emit();
+	llvm::ReturnInst::Create(*context, retVal, bb);
+
+	return NULL;
 }
 
 SwitchLabel::SwitchLabel(Expr *l, Stmt *s) {
@@ -215,3 +301,35 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 	if (def) def->Print(indentLevel+1);
 }
 
+llvm::Value* SwitchStmt::Emit() {
+	llvm::LLVMContext *context = irgen->GetContext();
+	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Switch Statement"); //CREATE BASIC BLOCK FOR SWITCH STATEMENT?
+	llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Footer");	//Creating Footer
+
+	std::vector<llvm::BasicBlock*> caseList;
+	
+	for(int i = 0; i < cases->NumElements(); i++) {
+		llvm::BasicBlock *curr = llvm::BasicBlock::Create(*context, "Case");
+		caseList.push_back(curr);
+	}
+	llvm::BasicBlock *deflt = llvm::BasicBlock::Create(*context, "Default Statement");
+	caseList.push_back(deflt);
+
+	llvm::Value* testVal = expr->Emit();
+
+	llvm::SwitchInst* thisSwitch = llvm::SwitchInst::Create(testVal, deflt, cases->NumElements(), bb); //bb?
+
+	for(int i = 0; i < cases->NumElements(); i++) {
+		Case* indivCase = dynamic_cast<Case*>(cases->Nth(i));
+		llvm::Value* labelVal = indivCase->stmt->Emit();
+		llvm::ConstantInt *constLabelVal = llvm::cast<llvm::ConstantInt>(labelVal);
+		thisSwitch->llvm::SwitchInst::addCase(constLabelVal, caseList[i]);
+
+		//if it containts break, branch to footer
+		//otherwise branch to next case
+		//if default, branch to footer
+		
+	}
+
+	return NULL;
+}
