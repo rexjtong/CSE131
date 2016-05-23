@@ -318,18 +318,32 @@ llvm::Value* SwitchStmt::Emit() {
 	llvm::Value* testVal = expr->Emit();
 
 	llvm::SwitchInst* thisSwitch = llvm::SwitchInst::Create(testVal, deflt, cases->NumElements(), bb); //bb?
+	irgen->branchTarget = fb;
 
 	for(int i = 0; i < cases->NumElements(); i++) {
 		Case* indivCase = dynamic_cast<Case*>(cases->Nth(i));
+		irgen->SetBasicBlock(caseList[i]);
 		llvm::Value* labelVal = indivCase->stmt->Emit();
 		llvm::ConstantInt *constLabelVal = llvm::cast<llvm::ConstantInt>(labelVal);
 		thisSwitch->llvm::SwitchInst::addCase(constLabelVal, caseList[i]);
 
+		if( (caseList[i]->getTerminator()) == NULL && (i != (cases->NumElements()-1)) ) {
+			llvm::BranchInst::Create(caseList[i+1], caseList[i]);
+		}
+		else if( (caseList[i]->getTerminator()) == NULL && (i == (cases->NumElements()-1)) ) {
+			llvm::BranchInst::Create(fb, caseList[i]);
+		}
+
 		//if it containts break, branch to footer
+		//save current break target in irgen? @1497
 		//otherwise branch to next case
 		//if default, branch to footer
-		
 	}
 
+	return NULL;
+}
+
+llvm::Value* BreakStmt::Emit() {
+	llvm::BranchInst::Create(irgen->branchTarget, irgen->GetBasicBlock());
 	return NULL;
 }
