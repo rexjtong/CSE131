@@ -70,6 +70,7 @@ void StmtBlock::Check() {
 
 		if ( decls->NumElements() > 0 ) {
 			for ( int i = 0; i < decls->NumElements(); ++i ) {
+				printf("There's a decl here\n");
 				Decl *d = decls->Nth(i);
 				/* !!! YOUR CODE HERE !!!
 				 * Basically you have to make sure that each declaration is 
@@ -82,6 +83,7 @@ void StmtBlock::Check() {
 
 		if ( stmts->NumElements() > 0 ) {
 			for ( int i = 0; i < stmts->NumElements(); ++i ) {
+				printf("There's a stmt here\n");
 				Stmt *s = stmts->Nth(i);
 				/* !!! YOUR CODE HERE !!!
 				 * Basically you have to make sure that each declaration is 

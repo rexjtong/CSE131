@@ -56,7 +56,7 @@ void BoolConstant::PrintChildren(int indentLevel) {
 }
 
 void VarExpr::Check() {
-	//printf("Checking VarExpr Node\n");
+	printf("Checking VarExpr Node\n");
 
 	Decl* vardec = symtab->search_scope(string(this->id->name));
 	if (vardec == NULL) {

@@ -68,6 +68,12 @@ llvm::Type* IRGenerator::ast_llvm(Type* astTy, llvm::LLVMContext *context) {
 		ty = llvm::Type::getVoidTy(*context);
 	} else if ( astTy == Type::floatType) {
 		ty = llvm::Type::getFloatTy(*context);
+	} else if ( astTy == Type::vec2Type) {
+		ty = llvm::VectorType::get(llvm::Type::getFloatTy(*context), 2);
+	} else if ( astTy == Type::vec3Type) {
+		ty = llvm::VectorType::get(llvm::Type::getFloatTy(*context), 3);
+	} else if ( astTy == Type::vec4Type) {
+		ty = llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4);
 	}
 	return ty;
 }

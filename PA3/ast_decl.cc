@@ -13,7 +13,7 @@ Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
 }
 
 void VarDecl::Check() {
-	//printf("Checking VarDecl Node\n");
+	printf("Checking VarDecl Node\n");
 
 
 	symtab->add_decl(string(this->id->name), this);
