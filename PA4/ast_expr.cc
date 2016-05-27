@@ -711,3 +711,7 @@ llvm::Value* LogicalExpr::Emit() {
 
 	return NULL;
 }
+
+llvm::Value* ConditionalExpr::Emit() {
+	return llvm::SelectInst::Create(cond->Emit(), trueExpr->Emit(), falseExpr->Emit(), "Conditional Expression", irgen->GetBasicBlock());
+}
