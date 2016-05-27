@@ -195,6 +195,7 @@ class ConditionalExpr : public Expr
     ConditionalExpr(Expr *c, Expr *t, Expr *f);
     void PrintChildren(int indentLevel);
     const char *GetPrintNameForNode() { return "ConditionalExpr"; }
+    virtual llvm::Value* Emit();
 };
 
 class LValue : public Expr 
@@ -248,6 +249,7 @@ class Call : public Expr
     Call(yyltype loc, Expr *base, Identifier *field, List<Expr*> *args);
     const char *GetPrintNameForNode() { return "Call"; }
     void PrintChildren(int indentLevel);
+    virtual llvm::Value* Emit();
 };
 
 class ActualsError : public Call

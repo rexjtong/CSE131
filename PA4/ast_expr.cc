@@ -119,7 +119,7 @@ llvm::Value* RelationalExpr::Emit() {
 	llvm::Value* r = right->Emit();
 
 	if(left->GetType() == Type::intType && right->GetType() == Type::intType) {
-		this->type = Type::intType;
+		this->type = Type::boolType;
 		llvm::CmpInst::Predicate pred;
 
 		if(op->IsOp(">")) {
@@ -145,7 +145,7 @@ llvm::Value* RelationalExpr::Emit() {
 
 	}
 	else if(left->GetType() == Type::floatType && right->GetType() == Type::floatType) {
-		this->type = Type::floatType;
+		this->type = Type::boolType;
 		llvm::CmpInst::Predicate pred;
 
 		if(op->IsOp(">")) {
@@ -220,6 +220,8 @@ llvm::Value* ArithmeticExpr::Emit() {
 		llvm::Value* r = right->Emit();
 
 		if(right->GetType() == Type::intType) {
+			this->type = Type::intType;
+
 			//printf("int\n");
 			if(op->IsOp("++")) {
 				//printf("right\n");
@@ -260,6 +262,8 @@ llvm::Value* ArithmeticExpr::Emit() {
 			//	}
 		}
 		else if(right->GetType() == Type::floatType) {
+			this->type = Type::floatType;
+
 			if(op->IsOp("++")) {
 				llvm::Value *val = llvm::ConstantFP::get(irgen->GetFloatType(), 1);
 				llvm::Value* inst = llvm::BinaryOperator::CreateFAdd(r, val, "FInc", irgen->GetBasicBlock());
@@ -393,6 +397,8 @@ llvm::Value* PostfixExpr::Emit() {
 	llvm::Value* l = left->Emit();
 
 	if(left->GetType() == Type::intType) {
+		this->type = Type::intType;
+
 		if(op->IsOp("++")) {
 			llvm::Value *val = llvm::ConstantInt::get(irgen->GetIntType(), 1);
 			llvm::Value *inst = llvm::BinaryOperator::CreateAdd(l, val, "IInc", irgen->GetBasicBlock());
@@ -425,6 +431,8 @@ llvm::Value* PostfixExpr::Emit() {
 		}
 	}
 	else if(left->GetType() == Type::floatType) {
+		this->type = Type::floatType;
+
 		if(op->IsOp("++")) {
 			llvm::Value *val = llvm::ConstantFP::get(irgen->GetFloatType(), 1);
 			llvm::Value* inst = llvm::BinaryOperator::CreateFAdd(l, val, "FInc", irgen->GetBasicBlock());
@@ -468,6 +476,8 @@ llvm::Value* AssignExpr::Emit() {
 	llvm::Value* r = right->Emit();
 
 	if(left->GetType() == Type::intType) {
+		this->type = Type::intType;
+
 		if(op->IsOp("=")) {
 			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
 			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
@@ -528,6 +538,8 @@ llvm::Value* AssignExpr::Emit() {
 		}
 	}
 	else if(left->GetType() == Type::floatType) {
+		this->type = Type::floatType;
+
 		if(op->IsOp("=")) {
 			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
 			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
@@ -666,6 +678,7 @@ void FieldAccess::PrintChildren(int indentLevel) {
 
 llvm::Value* FieldAccess::Emit() {
 	//TODO @1453
+	this->type = Type::floatType;
 	llvm::Value* baseVal = base->Emit();
 	llvm::Value* fieldIdx;
 	string swiz = string(field->GetName());
@@ -702,6 +715,8 @@ void Call::PrintChildren(int indentLevel) {
 llvm::Value* LogicalExpr::Emit() {
 	llvm::Value* rVal = right->Emit();
 	llvm::Value* lVal = left->Emit();
+	this->type == Type::boolType;
+
 	if(op->IsOp("&&")) {
 		return llvm::BinaryOperator::CreateAnd(lVal, rVal, "LogicalAnd", irgen->GetBasicBlock());
 	}
@@ -710,4 +725,26 @@ llvm::Value* LogicalExpr::Emit() {
 	}
 
 	return NULL;
+}
+
+llvm::Value* ConditionalExpr::Emit() {
+	return llvm::SelectInst::Create(cond->Emit(), trueExpr->Emit(), falseExpr->Emit(), "Conditional Expression", irgen->GetBasicBlock());
+}
+
+llvm::Value* Call::Emit() {
+	std::vector<llvm::Value*> argTypes;
+
+	for(int i = 0; i < actuals->NumElements(); i++) {
+		argTypes.push_back(actuals->Nth(i)->Emit());
+	}
+
+	llvm::ArrayRef<llvm::Value*> argArray(argTypes);
+
+	llvm::Value* tempVal = symtab->val_search(string(field->GetName()));
+	Decl* tempDecl = symtab->search_scope(string(field->GetName()));
+	FnDecl* dynamcast = dynamic_cast<FnDecl*>(tempDecl);
+
+	this->type = dynamcast->GetType();
+
+	return llvm::CallInst::Create(tempVal, argArray, "Function Call", irgen->GetBasicBlock());
 }
