@@ -52,6 +52,9 @@ llvm::Value* Program::Emit() {
 
 	symtab->pop_scope();
 
+	//TODO DEBUG METHOD
+	mod->dump();
+
 	llvm::WriteBitcodeToFile(mod, llvm::outs());
 
 	return NULL;

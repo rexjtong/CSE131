@@ -1,0 +1,3 @@
+funct: postfix
+param: int, 2
+gin: a, int, 3

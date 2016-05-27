@@ -1,0 +1,2 @@
+funct: iftest
+gin: a, float, 0.5

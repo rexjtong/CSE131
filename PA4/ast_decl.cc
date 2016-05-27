@@ -31,7 +31,8 @@ llvm::Value* VarDecl::Emit() {
 
 	if(symtab->is_global()) {
 		//printf("VarDecl global: %s\n",id->GetName());
-		inst = new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), irgen->ast_llvm(GetType(), irgen->GetContext()), true, llvm::GlobalValue::ExternalLinkage, constant, id->GetName());
+		//TODO GLOBALS NO LONGER CONST
+		inst = new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), irgen->ast_llvm(GetType(), irgen->GetContext()), false, llvm::GlobalValue::ExternalLinkage, constant, id->GetName());
 
 		symtab->add_decl(string(GetIdentifier()->GetName()), this, inst);
 	}
