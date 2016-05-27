@@ -204,28 +204,65 @@ void ForStmt::PrintChildren(int indentLevel) {
 
 llvm::Value* ForStmt::Emit() {
 	llvm::LLVMContext *context = irgen->GetContext();
-	llvm::BasicBlock *hb = llvm::BasicBlock::Create(*context, "Header block", irgen->GetFunction());
-	llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Footer block", irgen->GetFunction());
-	llvm::BasicBlock *sb = llvm::BasicBlock::Create(*context, "Step block", irgen->GetFunction());
-	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Body block", irgen->GetFunction());
 
-	init->Emit();
-	llvm::BranchInst::Create(hb, irgen->GetBasicBlock());
+	if(step != NULL) {
+		llvm::BasicBlock *hb = llvm::BasicBlock::Create(*context, "Header block", irgen->GetFunction());
+		llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Step block", irgen->GetFunction());
+		llvm::BasicBlock *sb = llvm::BasicBlock::Create(*context, "Footer block", irgen->GetFunction());
+		llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Body block", irgen->GetFunction());
 
-	irgen->SetBasicBlock(hb);
-	llvm::Value* testVal = test->Emit();
-	llvm::BranchInst::Create(bb, sb, testVal, hb);
+		irgen->breakBlockStack.push(sb);
+		irgen->continueBlockStack.push(fb);
+	
+		init->Emit();
+		llvm::BranchInst::Create(hb, irgen->GetBasicBlock());
 
-	irgen->SetBasicBlock(bb);
-	body->Emit();
-	llvm::BranchInst::Create(fb, bb);
-	irgen->SetBasicBlock(fb);
-	step->Emit();
-	llvm::BranchInst::Create(hb, fb);
+		irgen->SetBasicBlock(hb);
+		llvm::Value* testVal = test->Emit();
+		llvm::BranchInst::Create(bb, sb, testVal, hb);
 
+		irgen->SetBasicBlock(bb);
+		body->Emit();
+		llvm::BranchInst::Create(fb, bb);
+		irgen->SetBasicBlock(fb);
+		step->Emit();
+		llvm::BranchInst::Create(hb, fb);
+
+		irgen->breakBlockStack.pop();
+		irgen->continueBlockStack.pop();
+
+		return NULL;
+	}
+	else if(step == NULL) {
+		llvm::BasicBlock *hb = llvm::BasicBlock::Create(*context, "Header block", irgen->GetFunction());
+		//llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Step block", irgen->GetFunction());
+		llvm::BasicBlock *sb = llvm::BasicBlock::Create(*context, "Footer block", irgen->GetFunction());
+		llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Body block", irgen->GetFunction());
+
+		irgen->breakBlockStack.push(sb);
+		irgen->continueBlockStack.push(hb);
+	
+		init->Emit();
+		llvm::BranchInst::Create(hb, irgen->GetBasicBlock());
+
+		irgen->SetBasicBlock(hb);
+		llvm::Value* testVal = test->Emit();
+		llvm::BranchInst::Create(bb, sb, testVal, hb);
+
+		irgen->SetBasicBlock(bb);
+		body->Emit();
+		llvm::BranchInst::Create(hb, bb);
+		//irgen->SetBasicBlock(fb);
+		//step->Emit();
+		//llvm::BranchInst::Create(hb, fb);
+
+		irgen->breakBlockStack.pop();
+		irgen->continueBlockStack.pop();
+
+		return NULL;
+	}
 
 	return NULL;
-
 }
 
 void WhileStmt::PrintChildren(int indentLevel) {
@@ -236,8 +273,11 @@ void WhileStmt::PrintChildren(int indentLevel) {
 llvm::Value* WhileStmt::Emit() {
 	llvm::LLVMContext *context = irgen->GetContext();
 	llvm::BasicBlock *hb = llvm::BasicBlock::Create(*context, "Header block", irgen->GetFunction());
-	llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Footer block", irgen->GetFunction());
-	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Body block", irgen->GetFunction());
+	llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Body block", irgen->GetFunction());
+	llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Footer block", irgen->GetFunction());
+
+	irgen->breakBlockStack.push(bb);
+	irgen->continueBlockStack.push(hb);
 
 	llvm::BranchInst::Create(hb, irgen->GetBasicBlock());
 
@@ -248,6 +288,9 @@ llvm::Value* WhileStmt::Emit() {
 	irgen->SetBasicBlock(bb);
 	body->Emit();
 	llvm::BranchInst::Create(hb, bb);
+
+	irgen->breakBlockStack.pop();
+	irgen->continueBlockStack.pop();
 
 	return NULL;
 
@@ -335,6 +378,8 @@ llvm::Value* SwitchStmt::Emit() {
 	llvm::Value* testVal = expr->Emit();
 
 	llvm::SwitchInst* thisSwitch = llvm::SwitchInst::Create(testVal, deflt, cases->NumElements(), bb); //bb?
+	
+	//TODO may have to change branch target to breakBlockStack
 	irgen->branchTarget = fb;
 
 	for(int i = 0; i < cases->NumElements(); i++) {
@@ -361,6 +406,13 @@ llvm::Value* SwitchStmt::Emit() {
 }
 
 llvm::Value* BreakStmt::Emit() {
-	llvm::BranchInst::Create(irgen->branchTarget, irgen->GetBasicBlock());
+	llvm::BranchInst::Create(irgen->breakBlockStack.top(), irgen->GetBasicBlock());
+		
+	return NULL;
+}
+
+llvm::Value* ContinueStmt::Emit() {
+	llvm::BranchInst::Create(irgen->continueBlockStack.top(), irgen->GetBasicBlock());
+		
 	return NULL;
 }

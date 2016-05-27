@@ -17,6 +17,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Constants.h"
 #include "ast_type.h"
+#include <stack>
 
 class IRGenerator {
   public:
@@ -38,6 +39,8 @@ class IRGenerator {
     llvm::Type *GetFloatType() const;
     llvm::Type *ast_llvm(Type* astTy, llvm::LLVMContext *context);
     llvm::BasicBlock *branchTarget;
+    stack<llvm::BasicBlock*> continueBlockStack;
+    stack<llvm::BasicBlock*> breakBlockStack;
 
   private:
     llvm::LLVMContext *context;
