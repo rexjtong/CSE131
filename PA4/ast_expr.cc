@@ -94,6 +94,7 @@ llvm::Value* VarExpr::Emit() {
 	llvm::Value* tempVal = symtab->val_search(string(GetIdentifier()->GetName()));
 	Decl* tempDecl = symtab->search_scope(string(GetIdentifier()->GetName()));
 	VarDecl* dynamcast = dynamic_cast<VarDecl*>(tempDecl);
+
 	this->type = dynamcast->GetType();
 	llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, GetIdentifier()->GetName(), irgen->GetBasicBlock());
 	return vExprInst;
