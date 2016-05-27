@@ -324,11 +324,17 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value* ReturnStmt::Emit() {
 	//printf("Emitting ReturnStmt Node\n");
-
 	llvm::LLVMContext *context = irgen->GetContext();
-	// llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Return Statement");
-	llvm::Value* retVal = expr->Emit();
-	llvm::ReturnInst::Create(*context, retVal, irgen->GetBasicBlock());
+
+	if ( expr == NULL ) {
+		llvm::ReturnInst::Create(*context, llvm::Constant::getNullValue(llvm::Type::getVoidTy(*context)), irgen->GetBasicBlock());
+	}
+
+	else if ( expr != NULL ) {
+		// llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "Return Statement");
+		llvm::Value* retVal = expr->Emit();
+		llvm::ReturnInst::Create(*context, retVal, irgen->GetBasicBlock());
+	}
 
 	return NULL;
 }
