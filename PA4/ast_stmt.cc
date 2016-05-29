@@ -127,9 +127,9 @@ llvm::Value* StmtBlock::Emit() {
 
 	symtab->pop_scope();
 
-	//if(irgen->GetBasicBlock()->getTerminator() == NULL) {
-	//	new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
-	//}
+	if(irgen->GetBasicBlock()->empty()) {
+		new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
+	}
 
 	return NULL;
 }
@@ -179,13 +179,18 @@ llvm::Value* IfStmt::Emit() {
 	
 	irgen->SetBasicBlock(bb);
 	llvm::Value* bodyVal = body->Emit();
-	llvm::BranchInst::Create(fb, bb);
+
+	if( irgen->GetBasicBlock()->getTerminator() == NULL ) {
+		llvm::BranchInst::Create(fb, bb);
+	}
 
 	if(elseBody != NULL) {
 		irgen->SetBasicBlock(eb);
 		llvm::Value* bodyVal = elseBody->Emit();
 
-		llvm::BranchInst::Create(fb, eb);
+		if( irgen->GetBasicBlock()->getTerminator() == NULL ) {
+			llvm::BranchInst::Create(fb, eb);
+		}
 	}
 
 	irgen->SetBasicBlock(fb);

@@ -127,6 +127,8 @@ llvm::Value* FnDecl::Emit() {
 	
 	symtab->add_decl(string(GetIdentifier()->GetName()), this, f);
 
+	irgen->SetBasicBlock(NULL);
+
 	//symtab->pop_scope();
 
 	return f;
