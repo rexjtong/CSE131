@@ -53,7 +53,7 @@ llvm::Value* Program::Emit() {
 	symtab->pop_scope();
 
 	//TODO DEBUG METHOD
-	//mod->dump();
+	mod->dump();
 
 	llvm::WriteBitcodeToFile(mod, llvm::outs());
 
@@ -126,6 +126,10 @@ llvm::Value* StmtBlock::Emit() {
 	}
 
 	symtab->pop_scope();
+
+	//if(irgen->GetBasicBlock()->getTerminator() == NULL) {
+	//	new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
+	//}
 
 	return NULL;
 }

@@ -328,7 +328,18 @@ llvm::Value* ArithmeticExpr::Emit() {
 				return llvm::BinaryOperator::CreateFSub(l, r, "FSub", irgen->GetBasicBlock());
 			}
 			else if(op->IsOp("*")) {
-				return llvm::BinaryOperator::CreateFMul(l, r, "FMul", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* mulx = llvm::BinaryOperator::CreateFMul(x, r, "FMul", irgen->GetBasicBlock());
+				llvm::Value* muly = llvm::BinaryOperator::CreateFMul(y, r, "FMul", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::UndefValue::get(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+
+				llvm::InsertElementInst::Create(newVec, mulx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::InsertElementInst::Create(newVec, muly, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec;
 			}
 			else if(op->IsOp("/")) {
 				return llvm::BinaryOperator::CreateFDiv(l, r, "FDiv", irgen->GetBasicBlock());
@@ -609,6 +620,75 @@ llvm::Value* AssignExpr::Emit() {
 			return vExprInst;
 
 		}
+	}
+	else if(left->GetType() == Type::vec2Type) {
+		this->type = Type::floatType;
+
+		if(op->IsOp("=")) {
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			//llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Extract x",irgen->GetBasicBlock());
+			//llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Extract y",irgen->GetBasicBlock());
+
+			//llvm::InsertElementInst::Create(tempVal, x, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			//llvm::InsertElementInst::Create(tempVal, y, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+			return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
+			//return NULL;
+		}/*
+		else if(op->IsOp("+=")) {
+			llvm::Value* newVal = llvm::BinaryOperator::CreateFAdd(l, r, "FAddA", irgen->GetBasicBlock());
+
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			new llvm::StoreInst(newVal, tempVal, irgen->GetBasicBlock());
+
+			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+			return vExprInst;
+
+		}
+		else if(op->IsOp("*=")) {
+
+			llvm::Value* newVal = llvm::BinaryOperator::CreateFMul(l, r, "FMulA", irgen->GetBasicBlock());
+
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			new llvm::StoreInst(newVal, tempVal, irgen->GetBasicBlock());
+
+			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+			return vExprInst;
+
+		}
+
+
+		else if(op->IsOp("-=")) {
+			llvm::Value* newVal = llvm::BinaryOperator::CreateFSub(l, r, "FSubA", irgen->GetBasicBlock());
+
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			new llvm::StoreInst(newVal, tempVal, irgen->GetBasicBlock());
+
+			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+			return vExprInst;
+
+		}
+		else if(op->IsOp("/=")) {
+
+			llvm::Value* newVal = llvm::BinaryOperator::CreateFDiv(l, r, "FDivA", irgen->GetBasicBlock());
+
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			new llvm::StoreInst(newVal, tempVal, irgen->GetBasicBlock());
+
+			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+			return vExprInst;
+
+		}*/
 	}
 
 
