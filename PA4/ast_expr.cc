@@ -307,11 +307,22 @@ llvm::Value* ArithmeticExpr::Emit() {
 		llvm::Value* l = left->Emit();
 		llvm::Value* r = right->Emit();
 
-		if(left->GetType() == Type::vec2Type || right->GetType() == Type::vec2Type) {
+		if(left->GetType() == Type::vec2Type && right->GetType() == Type::floatType) {
 			this->type = Type::vec2Type;
 
 			if(op->IsOp("+")) {
-				return llvm::BinaryOperator::CreateFAdd(l, r, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* addx = llvm::BinaryOperator::CreateFAdd(x, r, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* addy = llvm::BinaryOperator::CreateFAdd(y, r, "FAdd", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::UndefValue::get(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+
+				llvm::InsertElementInst::Create(newVec, addx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::InsertElementInst::Create(newVec, addy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec;
 			}
 			else if(op->IsOp("-")) {
 				return llvm::BinaryOperator::CreateFSub(l, r, "FSub", irgen->GetBasicBlock());
@@ -323,7 +334,7 @@ llvm::Value* ArithmeticExpr::Emit() {
 				return llvm::BinaryOperator::CreateFDiv(l, r, "FDiv", irgen->GetBasicBlock());
 			}
 		}
-		else if(left->GetType() == Type::vec3Type || right->GetType() == Type::vec3Type) {
+		else if(left->GetType() == Type::vec3Type && right->GetType() == Type::floatType) {
 			this->type = Type::vec3Type;
 
 			if(op->IsOp("+")) {
@@ -339,7 +350,7 @@ llvm::Value* ArithmeticExpr::Emit() {
 				return llvm::BinaryOperator::CreateFDiv(l, r, "FDiv", irgen->GetBasicBlock());
 			}
 		}
-		else if(left->GetType() == Type::vec4Type || right->GetType() == Type::vec4Type) {
+		else if(left->GetType() == Type::vec4Type && right->GetType() == Type::floatType) {
 			this->type = Type::vec4Type;
 
 			if(op->IsOp("+")) {
