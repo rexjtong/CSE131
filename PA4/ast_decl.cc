@@ -84,7 +84,7 @@ void VarDecl::PrintChildren(int indentLevel) {
 
 llvm::Value* FnDecl::Emit() {
 	//printf("Emitting FnDecl Node\n");
-	//symtab->push_scope(SymbolTable::Function);
+	symtab->push_scope(SymbolTable::Function);
 	std::vector<llvm::Type*> argTypes;
 
 	//llvm::LLVMContext *context = irgen->GetContext();
@@ -135,7 +135,7 @@ llvm::Value* FnDecl::Emit() {
 
 	irgen->SetBasicBlock(NULL);
 
-	//symtab->pop_scope();
+	symtab->pop_scope();
 
 	return f;
 }
