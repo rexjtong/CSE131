@@ -195,6 +195,9 @@ llvm::Value* IfStmt::Emit() {
 
 	irgen->SetBasicBlock(fb);
 
+	eb->moveAfter(bb);
+	fb->moveAfter(eb);
+
 	return NULL;
 }
 
