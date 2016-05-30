@@ -74,6 +74,11 @@ llvm::Type* IRGenerator::ast_llvm(Type* astTy, llvm::LLVMContext *context) {
 		ty = llvm::VectorType::get(llvm::Type::getFloatTy(*context), 3);
 	} else if ( astTy == Type::vec4Type) {
 		ty = llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4);
+	} else if( dynamic_cast<ArrayType*>(astTy) != NULL) {
+		printf("an array\n");
+		ArrayType* astArray = dynamic_cast<ArrayType*>(astTy);
+		llvm::Type* elemTy = ast_llvm( astArray->GetElemType(), context);
+		ty = llvm::ArrayType::get(elemTy, astArray->GetElemCount());
 	}
 	return ty;
 }
