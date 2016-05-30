@@ -42,6 +42,12 @@ llvm::Value* VarDecl::Emit() {
 
 		symtab->add_decl(string(GetIdentifier()->GetName()), this, inst);
 
+		//GetType()->PrintType();
+
+		//if(dynamic_cast<ArrayType*>(GetType()) != NULL) {
+		//	printf("ARRAY\n");
+		//}
+
 		// new llvm::StoreInst(value, , irgen->GetBasicBlock());
 	}
 

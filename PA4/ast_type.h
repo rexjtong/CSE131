@@ -53,6 +53,7 @@ class Type : public Node
     const char *GetPrintNameForNode() { return "Type"; }
     void PrintChildren(int indentLevel);
 
+    virtual void PrintType() {printf("%s\n", typeName);}
     virtual void PrintToStream(ostream& out) { out << typeName; }
     friend ostream& operator<<(ostream& out, Type *t) { t->PrintToStream(out); return out; }
     virtual bool IsEquivalentTo(Type *other) { return (this == other); }
@@ -86,6 +87,7 @@ class ArrayType : public Type
   public:
     ArrayType(yyltype loc, Type *elemType, int elemCount);
     
+    virtual void PrintType() {printf("ArrayType\n");}
     const char *GetPrintNameForNode() { return "ArrayType"; }
     void PrintChildren(int indentLevel);
     void PrintToStream(ostream& out) { out << elemType << "[]"; }

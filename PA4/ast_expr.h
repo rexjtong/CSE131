@@ -207,9 +207,10 @@ class LValue : public Expr
 class ArrayAccess : public LValue 
 {
   protected:
-    Expr *base, *subscript;
     
   public:
+    
+    Expr *base, *subscript;
     ArrayAccess(yyltype loc, Expr *base, Expr *subscript);
     const char *GetPrintNameForNode() { return "ArrayAccess"; }
     void PrintChildren(int indentLevel);
@@ -224,10 +225,11 @@ class ArrayAccess : public LValue
 class FieldAccess : public LValue 
 {
   protected:
-    Expr *base;	// will be NULL if no explicit base
-    Identifier *field;
+    
     
   public:
+    Expr *base;	// will be NULL if no explicit base
+    Identifier *field;
     FieldAccess(Expr *base, Identifier *field); //ok to pass NULL base
     const char *GetPrintNameForNode() { return "FieldAccess"; }
     void PrintChildren(int indentLevel);

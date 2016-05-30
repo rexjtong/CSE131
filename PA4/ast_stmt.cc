@@ -53,7 +53,7 @@ llvm::Value* Program::Emit() {
 	symtab->pop_scope();
 
 	//TODO DEBUG METHOD
-	mod->dump();
+	//mod->dump();
 
 	llvm::WriteBitcodeToFile(mod, llvm::outs());
 
@@ -439,7 +439,7 @@ llvm::Value* SwitchStmt::Emit() {
 			Default* defltCase = dynamic_cast<Default*>(cases->Nth(i));
 
 			if ( defltCase != NULL ) {
-				printf("IN DEFAULT CHECK/EMIT THING!!\n");
+				//printf("IN DEFAULT CHECK/EMIT THING!!\n");
 				irgen->SetBasicBlock(deflt);
 				defltCase->stmt->Emit();
 				//llvm::BranchInst::Create(fb, deflt);
