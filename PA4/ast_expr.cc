@@ -2181,23 +2181,77 @@ void FieldAccess::PrintChildren(int indentLevel) {
 
 llvm::Value* FieldAccess::Emit() {
 	//TODO @1453
-	this->type = Type::floatType;
 	llvm::Value* baseVal = base->Emit();
 	llvm::Value* fieldIdx;
 	string swiz = string(field->GetName());
-	if(swiz[0] == 'x') {
-		fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+	std::vector<llvm::Constant*> swizzles;
+
+	if (swiz.length() == 1) {
+		this->type = Type::floatType;
 	}
-	else if(swiz[0] == 'y') {
-		fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+	else if (swiz.length() == 2) {
+		this->type = Type::vec2Type;
 	}
-	else if(swiz[0] == 'z') {
-		fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+	else if (swiz.length() == 3) {
+		this->type = Type::vec3Type;
 	}
-	else if(swiz[0] == 'w') {
-		fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+	else if (swiz.length() == 4) {
+		this->type = Type::vec4Type;
 	}
-	return llvm::ExtractElementInst::Create(baseVal, fieldIdx, "Field Access", irgen->GetBasicBlock());
+	else {
+		printf("Siwzzle with too many arguments? THIS SHOULDN'T HAPPEN\n");
+		return NULL;
+	}
+
+
+	if (swiz.length() == 1) {
+		if(swiz[0] == 'x') {
+			fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+		}
+		else if(swiz[0] == 'y') {
+			fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+		}
+		else if(swiz[0] == 'z') {
+			fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+		}
+		else if(swiz[0] == 'w') {
+			fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+		}
+		return llvm::ExtractElementInst::Create(baseVal, fieldIdx, "Field Access", irgen->GetBasicBlock());
+
+	}
+
+	else {
+		for(int i = 0; i < swiz.length(); i++) {
+			if(swiz[i] == 'x') {
+				fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+				swizzles.push_back(llvm::ConstantInt::get(irgen->GetIntType(), 0));
+			}
+			else if(swiz[i] == 'y') {
+				fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+				swizzles.push_back(llvm::ConstantInt::get(irgen->GetIntType(), 1));
+			}
+			else if(swiz[i] == 'z') {
+				fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+				swizzles.push_back(llvm::ConstantInt::get(irgen->GetIntType(), 2));
+			}
+			else if(swiz[i] == 'w') {
+				fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+				swizzles.push_back(llvm::ConstantInt::get(irgen->GetIntType(), 3));
+			}
+			//return llvm::ExtractElementInst::Create(baseVal, fieldIdx, "Field Acces", irgen->GetBasicBlock());
+		}
+
+		VarExpr* dynam = dynamic_cast<VarExpr*>(base);
+		llvm::Value* tempVal = symtab->val_search(string(dynam->GetIdentifier()->GetName()));
+
+		llvm::LoadInst* vecVal = new llvm::LoadInst(tempVal, field->GetName(), irgen->GetBasicBlock());
+		llvm::UndefValue* undef = llvm::UndefValue::get(baseVal->getType());
+
+		llvm::ArrayRef<llvm::Constant*> swizzleArrayRef(swizzles);
+		llvm::Constant *mask = llvm::ConstantVector::get(swizzleArrayRef);
+		return new llvm::ShuffleVectorInst(vecVal, undef, mask, "Shuffle Vector", irgen->GetBasicBlock());
+	}
 
 }	
 
