@@ -1,6 +1,6 @@
-arrays
-vectors
-swizzle stuff
-array/vector airthmetic
-Various Stmts
-FnCall
+vector airthmetic
+multi_ret/multi_func
+switch parser bullshit
+vectors inside arrays
+nested if
+no return statement in func

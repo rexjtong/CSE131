@@ -128,7 +128,15 @@ llvm::Value* StmtBlock::Emit() {
 	symtab->pop_scope();
 
 	if(irgen->GetBasicBlock()->empty()) {
-		new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
+		//if ( footerStack.size() > 1 ) {
+		//	llvm::BasicBlock* topBlock = footerBlock.top();
+		//	footerBlock.pop();
+		//	llvm::BranchInst::Create(footerBlock.top(), topBlock);
+		//}
+		//else {
+			new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
+		//	if ( footerStack.size() == 
+		//}
 	}
 
 	return NULL;
@@ -163,6 +171,8 @@ llvm::Value* IfStmt::Emit() {
 
 	llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Footer block",irgen->GetFunction());
 
+	//irgen->footerStack.push(fb);
+
 	if(elseBody != NULL) {
 		eb = llvm::BasicBlock::Create(*context, "Else block",irgen->GetFunction());
 	}
@@ -181,7 +191,7 @@ llvm::Value* IfStmt::Emit() {
 	llvm::Value* bodyVal = body->Emit();
 
 	if( irgen->GetBasicBlock()->getTerminator() == NULL ) {
-		llvm::BranchInst::Create(fb, bb);
+		llvm::BranchInst::Create(fb, irgen->GetBasicBlock());
 	}
 
 	if(elseBody != NULL) {
@@ -189,14 +199,19 @@ llvm::Value* IfStmt::Emit() {
 		llvm::Value* bodyVal = elseBody->Emit();
 
 		if( irgen->GetBasicBlock()->getTerminator() == NULL ) {
-			llvm::BranchInst::Create(fb, eb);
+			llvm::BranchInst::Create(fb, irgen->GetBasicBlock());
 		}
 	}
 
 	irgen->SetBasicBlock(fb);
-
-	eb->moveAfter(bb);
-	fb->moveAfter(eb);
+	
+	if(elseBody != NULL) {
+		eb->moveAfter(bb);
+		fb->moveAfter(eb);
+	}
+	else {
+		fb->moveAfter(bb);
+	}
 
 	return NULL;
 }
@@ -238,7 +253,7 @@ llvm::Value* ForStmt::Emit() {
 
 		irgen->SetBasicBlock(bb);
 		body->Emit();
-		llvm::BranchInst::Create(fb, bb);
+		llvm::BranchInst::Create(fb, irgen->GetBasicBlock());
 		irgen->SetBasicBlock(fb);
 		step->Emit();
 		llvm::BranchInst::Create(hb, fb);
@@ -267,7 +282,7 @@ llvm::Value* ForStmt::Emit() {
 
 		irgen->SetBasicBlock(bb);
 		body->Emit();
-		llvm::BranchInst::Create(hb, bb);
+		llvm::BranchInst::Create(hb, irgen->GetBasicBlock());
 		//irgen->SetBasicBlock(fb);
 		//step->Emit();
 		//llvm::BranchInst::Create(hb, fb);
@@ -305,7 +320,7 @@ llvm::Value* WhileStmt::Emit() {
 
 	irgen->SetBasicBlock(bb);
 	body->Emit();
-	llvm::BranchInst::Create(hb, bb);
+	llvm::BranchInst::Create(hb, irgen->GetBasicBlock());
 
 	irgen->breakBlockStack.pop();
 	irgen->continueBlockStack.pop();
@@ -388,6 +403,8 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value* SwitchStmt::Emit() {
+	//TODO Same branching issue as in if, for, while, etc
+	//Basically branching from something other than GetBasicBlock()
 	llvm::LLVMContext *context = irgen->GetContext();
 
 	llvm::BasicBlock *fb = llvm::BasicBlock::Create(*context, "Footer Block", irgen->GetFunction());	//Creating Footer

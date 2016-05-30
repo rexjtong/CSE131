@@ -2239,7 +2239,6 @@ llvm::Value* FieldAccess::Emit() {
 				fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
 				swizzles.push_back(llvm::ConstantInt::get(irgen->GetIntType(), 3));
 			}
-			//return llvm::ExtractElementInst::Create(baseVal, fieldIdx, "Field Acces", irgen->GetBasicBlock());
 		}
 
 		VarExpr* dynam = dynamic_cast<VarExpr*>(base);
