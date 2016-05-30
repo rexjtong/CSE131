@@ -216,15 +216,12 @@ llvm::Value* ArithmeticExpr::Emit() {
 	//printf("Emitting ArithmeticExpr Node\n");
 
 	if(left == NULL) {
-		//printf("Unary\n");
 		llvm::Value* r = right->Emit();
 
 		if(right->GetType() == Type::intType) {
 			this->type = Type::intType;
 
-			//printf("int\n");
 			if(op->IsOp("++")) {
-				//printf("right\n");
 				llvm::Value *val = llvm::ConstantInt::get(irgen->GetIntType(), 1);
 				llvm::Value *inst = llvm::BinaryOperator::CreateAdd(r, val, "IInc", irgen->GetBasicBlock());
 
@@ -253,13 +250,13 @@ llvm::Value* ArithmeticExpr::Emit() {
 				return vExprInst;
 
 			}
-			// TODO this
-			//	else if(op->IsOp("+")) {
-
-			//	}
-			//	else if(op->IsOp("-")) {
-
-			//	}
+			else if(op->IsOp("+")) {
+				return r;
+			}
+			else if(op->IsOp("-")) {
+				llvm::Value *val = llvm::ConstantInt::get(irgen->GetIntType(), -1);
+				return llvm::BinaryOperator::CreateMul(r, val, "IMul", irgen->GetBasicBlock());
+			}
 		}
 		else if(right->GetType() == Type::floatType) {
 			this->type = Type::floatType;
@@ -277,8 +274,6 @@ llvm::Value* ArithmeticExpr::Emit() {
 
 				llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, varexpr->GetIdentifier()->GetName(), irgen->GetBasicBlock());
 				return vExprInst;
-
-
 			}
 			else if(op->IsOp("--")) {
 				llvm::Value *val = llvm::ConstantFP::get(irgen->GetFloatType(), 1);
@@ -295,12 +290,16 @@ llvm::Value* ArithmeticExpr::Emit() {
 				return vExprInst;
 
 			}
-			//	else if(op->IsOp("+")) {
-
-			//	}
-			//	else if(op->IsOp("-")) {
-
-			//	}
+			else if(op->IsOp("+")) {
+				return r;
+			}
+			else if(op->IsOp("-")) {
+				llvm::Value *val = llvm::ConstantFP::get(irgen->GetFloatType(), -1);
+				return llvm::BinaryOperator::CreateFMul(r, val, "FMul", irgen->GetBasicBlock());
+			}
+		}
+		else if(right->GetType() == Type::vec2Type) {
+			
 		}
 	}
 	else if(left != NULL) {
@@ -317,15 +316,26 @@ llvm::Value* ArithmeticExpr::Emit() {
 				llvm::Value* addx = llvm::BinaryOperator::CreateFAdd(x, r, "FAdd", irgen->GetBasicBlock());
 				llvm::Value* addy = llvm::BinaryOperator::CreateFAdd(y, r, "FAdd", irgen->GetBasicBlock());
 
-				llvm::Value* newVec = llvm::UndefValue::get(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
 
-				llvm::InsertElementInst::Create(newVec, addx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
-				llvm::InsertElementInst::Create(newVec, addy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, addx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, addy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
 
-				return newVec;
+				return newVec2;
 			}
 			else if(op->IsOp("-")) {
-				return llvm::BinaryOperator::CreateFSub(l, r, "FSub", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* subx = llvm::BinaryOperator::CreateFSub(x, r, "FSub", irgen->GetBasicBlock());
+				llvm::Value* suby = llvm::BinaryOperator::CreateFSub(y, r, "FSub", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, subx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, suby, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
 			}
 			else if(op->IsOp("*")) {
 				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
@@ -334,47 +344,662 @@ llvm::Value* ArithmeticExpr::Emit() {
 				llvm::Value* mulx = llvm::BinaryOperator::CreateFMul(x, r, "FMul", irgen->GetBasicBlock());
 				llvm::Value* muly = llvm::BinaryOperator::CreateFMul(y, r, "FMul", irgen->GetBasicBlock());
 
-				llvm::Value* newVec = llvm::UndefValue::get(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
 
-				llvm::InsertElementInst::Create(newVec, mulx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
-				llvm::InsertElementInst::Create(newVec, muly, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, mulx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, muly, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
 
-				return newVec;
+				return newVec2;
 			}
 			else if(op->IsOp("/")) {
-				return llvm::BinaryOperator::CreateFDiv(l, r, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* divx = llvm::BinaryOperator::CreateFDiv(x, r, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* divy = llvm::BinaryOperator::CreateFDiv(y, r, "FDiv", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, divx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, divy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
 			}
 		}
 		else if(left->GetType() == Type::vec3Type && right->GetType() == Type::floatType) {
 			this->type = Type::vec3Type;
 
 			if(op->IsOp("+")) {
-				return llvm::BinaryOperator::CreateFAdd(l, r, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(x, r, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(y, r, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFAdd(z, r, "FAdd", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
 			}
 			else if(op->IsOp("-")) {
-				return llvm::BinaryOperator::CreateFSub(l, r, "FSub", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFSub(x, r, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFSub(y, r, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFSub(z, r, "FSub", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
 			}
 			else if(op->IsOp("*")) {
-				return llvm::BinaryOperator::CreateFMul(l, r, "FMul", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFMul(x, r, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFMul(y, r, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFMul(z, r, "FMul", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
 			}
 			else if(op->IsOp("/")) {
-				return llvm::BinaryOperator::CreateFDiv(l, r, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(x, r, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(y, r, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFDiv(z, r, "FDiv", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
 			}
 		}
 		else if(left->GetType() == Type::vec4Type && right->GetType() == Type::floatType) {
 			this->type = Type::vec4Type;
 
 			if(op->IsOp("+")) {
-				return llvm::BinaryOperator::CreateFAdd(l, r, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* w = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(x, r, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(y, r, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFAdd(z, r, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFAdd(w, r, "FAdd", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
 			}
 			else if(op->IsOp("-")) {
-				return llvm::BinaryOperator::CreateFSub(l, r, "FSub", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* w = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFSub(x, r, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFSub(y, r, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFSub(z, r, "FSub", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFSub(w, r, "FSub", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
 			}
 			else if(op->IsOp("*")) {
-				return llvm::BinaryOperator::CreateFMul(l, r, "FMul", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* w = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFMul(x, r, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFMul(y, r, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFMul(z, r, "FMul", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFMul(w, r, "FMul", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
 			}
 			else if(op->IsOp("/")) {
-				return llvm::BinaryOperator::CreateFDiv(l, r, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* w = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(x, r, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(y, r, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFDiv(z, r, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFDiv(w, r, "FDiv", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
+			}
+		}
+		else if(left->GetType() == Type::floatType && right->GetType() == Type::vec2Type) {
+			this->type = Type::vec2Type;
+
+			if(op->IsOp("+")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* addx = llvm::BinaryOperator::CreateFAdd(x, l, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* addy = llvm::BinaryOperator::CreateFAdd(y, l, "FAdd", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, addx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, addy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
+			}
+			else if(op->IsOp("-")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* subx = llvm::BinaryOperator::CreateFSub(x, l, "FSub", irgen->GetBasicBlock());
+				llvm::Value* suby = llvm::BinaryOperator::CreateFSub(y, l, "FSub", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, subx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, suby, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
+			}
+			else if(op->IsOp("*")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* mulx = llvm::BinaryOperator::CreateFMul(x, l, "FMul", irgen->GetBasicBlock());
+				llvm::Value* muly = llvm::BinaryOperator::CreateFMul(y, l, "FMul", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, mulx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, muly, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
+			}
+			else if(op->IsOp("/")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* divx = llvm::BinaryOperator::CreateFDiv(x, l, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* divy = llvm::BinaryOperator::CreateFDiv(y, l, "FDiv", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, divx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, divy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
+			}
+		}
+		else if(left->GetType() == Type::floatType && right->GetType() == Type::vec3Type) {
+			this->type = Type::vec3Type;
+
+			if(op->IsOp("+")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(x, l, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(y, l, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFAdd(z, l, "FAdd", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
+			}
+			else if(op->IsOp("-")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFSub(x, l, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFSub(y, l, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFSub(z, l, "FSub", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
+			}
+			else if(op->IsOp("*")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFMul(x, l, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFMul(y, l, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFMul(z, l, "FMul", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
+			}
+			else if(op->IsOp("/")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(x, l, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(y, l, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFDiv(z, l, "FDiv", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
+			}
+		}
+		else if(left->GetType() == Type::floatType && right->GetType() == Type::vec4Type) {
+			this->type = Type::vec4Type;
+
+			if(op->IsOp("+")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* w = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(x, l, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(y, l, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFAdd(z, l, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFAdd(w, l, "FAdd", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
+			}
+			else if(op->IsOp("-")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* w = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFSub(x, l, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFSub(y, l, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFSub(z, l, "FSub", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFSub(w, l, "FSub", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
+			}
+			else if(op->IsOp("*")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* w = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFMul(x, l, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFMul(y, l, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFMul(z, l, "FMul", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFMul(w, l, "FMul", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
+			}
+			else if(op->IsOp("/")) {
+				llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* z = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* w = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(x, l, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(y, l, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFDiv(z, l, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFDiv(w, l, "FDiv", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
+			}
+		}
+		else if(left->GetType() == Type::vec2Type && right->GetType() == Type::vec2Type) {
+			this->type = Type::vec2Type;
+
+			if(op->IsOp("+")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(lx, rx, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(ly, ry, "FAdd", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));				
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
+			}
+			else if(op->IsOp("-")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFSub(lx, rx, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFSub(ly, ry, "FSub", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));				
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
+			}
+			else if(op->IsOp("*")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFMul(lx, rx, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFMul(ly, ry, "FMul", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));				
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
+			}
+			else if(op->IsOp("/")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(lx, rx, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(ly, ry, "FDiv", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));				
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+
+				return newVec2;
+			}
+		}
+		else if(left->GetType() == Type::vec3Type && right->GetType() == Type::vec3Type) {
+			this->type = Type::vec3Type;
+
+			if(op->IsOp("+")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* lz = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* rz = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(lx, rx, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(ly, ry, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFAdd(lz, rz, "FAdd", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));				
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
+			}
+			else if(op->IsOp("-")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* lz = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* rz = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFSub(lx, rx, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFSub(ly, ry, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFSub(lz, rz, "FSub", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));				
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
+			}
+			else if(op->IsOp("*")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* lz = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* rz = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFMul(lx, rx, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFMul(ly, ry, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFMul(lz, rz, "FMul", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));				
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
+			}
+			else if(op->IsOp("/")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* lz = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* rz = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+
+				llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(lx, rx, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(ly, ry, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFDiv(lz, rz, "FDiv", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));				
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+
+				return newVec3;
+			}
+		}
+		else if(left->GetType() == Type::vec4Type && right->GetType() == Type::vec4Type) {
+			this->type = Type::vec4Type;
+
+			if(op->IsOp("+")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* lz = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* lw = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* rz = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* rw = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+			
+				llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(lx, rx, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(ly, ry, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFAdd(lz, rz, "FAdd", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFAdd(lw, rw, "FAdd", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
+			}
+			else if(op->IsOp("-")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* lz = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* lw = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* rz = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* rw = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+			
+				llvm::Value* newx = llvm::BinaryOperator::CreateFSub(lx, rx, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFSub(ly, ry, "FSub", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFSub(lz, rz, "FSub", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFSub(lw, rw, "FSub", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
+			}
+			else if(op->IsOp("*")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* lz = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* lw = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* rz = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* rw = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+			
+				llvm::Value* newx = llvm::BinaryOperator::CreateFMul(lx, rx, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFMul(ly, ry, "FMul", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFMul(lz, rz, "FMul", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFMul(lw, rw, "FMul", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
+			}
+			else if(op->IsOp("/")) {
+				llvm::Value* lx = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ly = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* lz = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* lw = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+
+				llvm::Value* rx = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+				llvm::Value* ry = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+				llvm::Value* rz = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+				llvm::Value* rw = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+			
+				llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(lx, rx, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(ly, ry, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* newz = llvm::BinaryOperator::CreateFDiv(lz, rz, "FDiv", irgen->GetBasicBlock());
+				llvm::Value* neww = llvm::BinaryOperator::CreateFDiv(lw, rw, "FDiv", irgen->GetBasicBlock());
+
+				llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+
+				llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+				llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+				llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+				
+				return newVec4;
 			}
 		}
 		else if(left->GetType() == Type::floatType && right->GetType() == Type::floatType) {
@@ -397,7 +1022,6 @@ llvm::Value* ArithmeticExpr::Emit() {
 			this->type = Type::intType;
 
 			if(op->IsOp("+")) {
-				//printf("Correct adding int\n");
 				return llvm::BinaryOperator::CreateAdd(l, r, "Add", irgen->GetBasicBlock());
 			}
 			else if(op->IsOp("-")) {
@@ -608,7 +1232,6 @@ llvm::Value* AssignExpr::Emit() {
 
 		}
 		else if(op->IsOp("/=")) {
-
 			llvm::Value* newVal = llvm::BinaryOperator::CreateFDiv(l, r, "FDivA", irgen->GetBasicBlock());
 
 			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
@@ -618,7 +1241,6 @@ llvm::Value* AssignExpr::Emit() {
 
 			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
 			return vExprInst;
-
 		}
 	}
 	else if(left->GetType() == Type::vec2Type) {
@@ -628,75 +1250,257 @@ llvm::Value* AssignExpr::Emit() {
 			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
 			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
 
-			//llvm::Value* x = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),0),"Extract x",irgen->GetBasicBlock());
-			//llvm::Value* y = llvm::ExtractElementInst::Create(r,llvm::ConstantInt::get(irgen->GetIntType(),1),"Extract y",irgen->GetBasicBlock());
-
-			//llvm::InsertElementInst::Create(tempVal, x, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
-			//llvm::InsertElementInst::Create(tempVal, y, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
-
 			return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
-			//return NULL;
-		}/*
+		}
 		else if(op->IsOp("+=")) {
-			llvm::Value* newVal = llvm::BinaryOperator::CreateFAdd(l, r, "FAddA", irgen->GetBasicBlock());
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
 
+			llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(x, r, "FAdd", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(y, r, "FAdd", irgen->GetBasicBlock());
+
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				
 			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
 			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
 
-			new llvm::StoreInst(newVal, tempVal, irgen->GetBasicBlock());
+			return new llvm::StoreInst(newVec2, tempVal, irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("-=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
 
-			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
-			return vExprInst;
+			llvm::Value* newx = llvm::BinaryOperator::CreateFSub(x, r, "FSub", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFSub(y, r, "FSub", irgen->GetBasicBlock());
 
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			return new llvm::StoreInst(newVec2, tempVal, irgen->GetBasicBlock());
 		}
 		else if(op->IsOp("*=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
 
-			llvm::Value* newVal = llvm::BinaryOperator::CreateFMul(l, r, "FMulA", irgen->GetBasicBlock());
+			llvm::Value* newx = llvm::BinaryOperator::CreateFMul(x, r, "FMul", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFMul(y, r, "FMul", irgen->GetBasicBlock());
 
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				
 			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
 			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
 
-			new llvm::StoreInst(newVal, tempVal, irgen->GetBasicBlock());
-
-			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
-			return vExprInst;
-
-		}
-
-
-		else if(op->IsOp("-=")) {
-			llvm::Value* newVal = llvm::BinaryOperator::CreateFSub(l, r, "FSubA", irgen->GetBasicBlock());
-
-			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
-			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
-
-			new llvm::StoreInst(newVal, tempVal, irgen->GetBasicBlock());
-
-			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
-			return vExprInst;
-
+			return new llvm::StoreInst(newVec2, tempVal, irgen->GetBasicBlock());
 		}
 		else if(op->IsOp("/=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
 
-			llvm::Value* newVal = llvm::BinaryOperator::CreateFDiv(l, r, "FDivA", irgen->GetBasicBlock());
+			llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(x, r, "FDiv", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(y, r, "FDiv", irgen->GetBasicBlock());
 
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 2));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+				
 			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
 			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
 
-			new llvm::StoreInst(newVal, tempVal, irgen->GetBasicBlock());
-
-			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
-			return vExprInst;
-
-		}*/
+			return new llvm::StoreInst(newVec2, tempVal, irgen->GetBasicBlock());
+		}
 	}
+	else if(left->GetType() == Type::vec3Type) {
+		this->type = Type::vec3Type;
 
+		if(op->IsOp("=")) {
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
 
-	//llvm::Value* tempVal = symtab->val_search(string(GetIdentifier()->GetName()));
-	//Decl* tempDecl = symtab->search_scope(string(GetIdentifier()->GetName()));
-	//this->type = dynamcast->GetType();
-	// llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, GetIdentifier()->GetName(), irgen->GetBasicBlock());
+			return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("+=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+			llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+		
+			llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(x, r, "FAdd", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(y, r, "FAdd", irgen->GetBasicBlock());
+			llvm::Value* newz = llvm::BinaryOperator::CreateFAdd(z, r, "FAdd", irgen->GetBasicBlock());
+			
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+			llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+			
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
 
+			return new llvm::StoreInst(newVec3, tempVal, irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("-=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+			llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+		
+			llvm::Value* newx = llvm::BinaryOperator::CreateFSub(x, r, "FSub", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFSub(y, r, "FSub", irgen->GetBasicBlock());
+			llvm::Value* newz = llvm::BinaryOperator::CreateFSub(z, r, "FSub", irgen->GetBasicBlock());
+			
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+			llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+			
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			return new llvm::StoreInst(newVec3, tempVal, irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("*=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+			llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+		
+			llvm::Value* newx = llvm::BinaryOperator::CreateFMul(x, r, "FMul", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFMul(y, r, "FMul", irgen->GetBasicBlock());
+			llvm::Value* newz = llvm::BinaryOperator::CreateFMul(z, r, "FMul", irgen->GetBasicBlock());
+			
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+			llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+			
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			return new llvm::StoreInst(newVec3, tempVal, irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("/=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+			llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+		
+			llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(x, r, "FDiv", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(y, r, "FDiv", irgen->GetBasicBlock());
+			llvm::Value* newz = llvm::BinaryOperator::CreateFDiv(z, r, "FDiv", irgen->GetBasicBlock());
+			
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 3));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+			llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+			
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			return new llvm::StoreInst(newVec3, tempVal, irgen->GetBasicBlock());
+		}
+	}
+	else if(left->GetType() == Type::vec4Type) {
+		this->type = Type::vec4Type;
+
+		if(op->IsOp("=")) {
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("+=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+			llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+			llvm::Value* w = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+		
+			llvm::Value* newx = llvm::BinaryOperator::CreateFAdd(x, r, "FAdd", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFAdd(y, r, "FAdd", irgen->GetBasicBlock());
+			llvm::Value* newz = llvm::BinaryOperator::CreateFAdd(z, r, "FAdd", irgen->GetBasicBlock());
+			llvm::Value* neww = llvm::BinaryOperator::CreateFAdd(w, r, "FAdd", irgen->GetBasicBlock());
+			
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+			llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+			llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+			
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			return new llvm::StoreInst(newVec4, tempVal, irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("-=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+			llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+			llvm::Value* w = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+		
+			llvm::Value* newx = llvm::BinaryOperator::CreateFSub(x, r, "FSub", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFSub(y, r, "FSub", irgen->GetBasicBlock());
+			llvm::Value* newz = llvm::BinaryOperator::CreateFSub(z, r, "FSub", irgen->GetBasicBlock());
+			llvm::Value* neww = llvm::BinaryOperator::CreateFSub(w, r, "FSub", irgen->GetBasicBlock());
+			
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+			llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+			llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+			
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			return new llvm::StoreInst(newVec4, tempVal, irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("*=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+			llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+			llvm::Value* w = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+		
+			llvm::Value* newx = llvm::BinaryOperator::CreateFMul(x, r, "FMul", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFMul(y, r, "FMul", irgen->GetBasicBlock());
+			llvm::Value* newz = llvm::BinaryOperator::CreateFMul(z, r, "FMul", irgen->GetBasicBlock());
+			llvm::Value* neww = llvm::BinaryOperator::CreateFMul(w, r, "FMul", irgen->GetBasicBlock());
+			
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+			llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+			llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+			
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			return new llvm::StoreInst(newVec4, tempVal, irgen->GetBasicBlock());
+		}
+		else if(op->IsOp("/=")) {
+			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
+			llvm::Value* y = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),1),"Access y", irgen->GetBasicBlock());
+			llvm::Value* z = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),2),"Access z", irgen->GetBasicBlock());
+			llvm::Value* w = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),3),"Access w", irgen->GetBasicBlock());
+		
+			llvm::Value* newx = llvm::BinaryOperator::CreateFDiv(x, r, "FDiv", irgen->GetBasicBlock());
+			llvm::Value* newy = llvm::BinaryOperator::CreateFDiv(y, r, "FDiv", irgen->GetBasicBlock());
+			llvm::Value* newz = llvm::BinaryOperator::CreateFDiv(z, r, "FDiv", irgen->GetBasicBlock());
+			llvm::Value* neww = llvm::BinaryOperator::CreateFDiv(w, r, "FDiv", irgen->GetBasicBlock());
+			
+			llvm::Value* newVec = llvm::Constant::getNullValue(llvm::VectorType::get(llvm::Type::getFloatTy(*irgen->GetContext()), 4));
+			llvm::Value* newVec1 = llvm::InsertElementInst::Create(newVec, newx, llvm::ConstantInt::get(irgen->GetIntType(),0), "Insert x", irgen->GetBasicBlock());
+			llvm::Value* newVec2 = llvm::InsertElementInst::Create(newVec1, newy, llvm::ConstantInt::get(irgen->GetIntType(),1), "Insert y", irgen->GetBasicBlock());
+			llvm::Value* newVec3 = llvm::InsertElementInst::Create(newVec2, newz, llvm::ConstantInt::get(irgen->GetIntType(),2), "Insert z", irgen->GetBasicBlock());
+			llvm::Value* newVec4 = llvm::InsertElementInst::Create(newVec3, neww, llvm::ConstantInt::get(irgen->GetIntType(),3), "Insert w", irgen->GetBasicBlock());
+			
+			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+			return new llvm::StoreInst(newVec4, tempVal, irgen->GetBasicBlock());
+		}
+	}
 
 	return NULL;
 }
@@ -743,6 +1547,36 @@ void ConditionalExpr::PrintChildren(int indentLevel) {
 	trueExpr->Print(indentLevel+1, "(true) ");
 	falseExpr->Print(indentLevel+1, "(false) ");
 }
+
+llvm::Value* ArrayAccess::Emit() {
+	printf("Emitting ArrayAccess\n");
+	VarExpr* dynamcast = dynamic_cast<VarExpr*>(base);
+	llvm::Value* mem = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+
+
+	//llvm::Value* mem = base->Emit();
+	llvm::Value* num = subscript->Emit();
+
+	vector<llvm::Value*> indices;
+	indices.push_back(llvm::ConstantInt::get(irgen->GetIntType(), 0));
+	indices.push_back(num);
+	llvm::ArrayRef<llvm::Value*> indRef = llvm::ArrayRef<llvm::Value*>(indices);
+
+	if(mem == NULL) {
+		printf("mem null\n");
+	}
+	if(num == NULL) {
+		printf("num null\n");
+	}
+	printf("before ptr\n");
+
+	llvm::Value* ptr = llvm::GetElementPtrInst::Create(mem, indRef, "Array Access", irgen->GetBasicBlock());
+	
+	printf("reached here\n");
+	return new llvm::LoadInst(ptr, "Load Element", irgen->GetBasicBlock());
+}
+
 ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
 	(base=b)->SetParent(this); 
 	(subscript=s)->SetParent(this);

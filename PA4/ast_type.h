@@ -90,6 +90,7 @@ class ArrayType : public Type
     void PrintChildren(int indentLevel);
     void PrintToStream(ostream& out) { out << elemType << "[]"; }
     Type *GetElemType() {return elemType;}
+    int GetElemCount() {return elemCount;}
 };
 
  
