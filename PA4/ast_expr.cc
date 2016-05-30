@@ -1349,8 +1349,9 @@ llvm::Value* PostfixExpr::Emit() {
 llvm::Value* AssignExpr::Emit() {
 	//TODO emitting left might be wrong dunno what to do with it
 	//printf("Emitting AssignExpr\n");
-	llvm::Value* l = left->Emit();
+	
 	llvm::Value* r = right->Emit();
+	llvm::Value* l = left->Emit();
 
 	if(left->GetType() == Type::intType) {
 		// printf("Is int\n");
@@ -1382,9 +1383,7 @@ llvm::Value* AssignExpr::Emit() {
 				return vExprInst;
 			}
 			else if(dynamic_cast<FieldAccess*>(left) != NULL) {
-				FieldAccess* dynamcast = dynamic_cast<FieldAccess*>(left);
-
-				printf("STILL NEED TO DO FIELD ACCESS ASSIGN\n");
+				printf("Should not reach here\n");
 			}
 			else if(dynamic_cast<VarExpr*>(left) != NULL) {
 				VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
@@ -1423,9 +1422,7 @@ llvm::Value* AssignExpr::Emit() {
 				return vExprInst;
 			}
 			else if(dynamic_cast<FieldAccess*>(left) != NULL) {
-				FieldAccess* dynamcast = dynamic_cast<FieldAccess*>(left);
-
-				printf("STILL NEED TO DO FIELD ACCESS ASSIGN\n");
+				printf("Should not reach here\n");
 			}
 			else if(dynamic_cast<VarExpr*>(left) != NULL) {
 				llvm::Value* newVal = llvm::BinaryOperator::CreateAdd(l, r, "IAddA", irgen->GetBasicBlock());
@@ -1465,9 +1462,7 @@ llvm::Value* AssignExpr::Emit() {
 				return vExprInst;
 			}
 			else if(dynamic_cast<FieldAccess*>(left) != NULL) {
-				FieldAccess* dynamcast = dynamic_cast<FieldAccess*>(left);
-
-				printf("STILL NEED TO DO FIELD ACCESS ASSIGN\n");
+				printf("Should not reach here\n");
 			}
 			else if(dynamic_cast<VarExpr*>(left) != NULL) {
 				llvm::Value* newVal = llvm::BinaryOperator::CreateMul(l, r, "IMulA", irgen->GetBasicBlock());
@@ -1507,9 +1502,7 @@ llvm::Value* AssignExpr::Emit() {
 				return vExprInst;
 			}
 			else if(dynamic_cast<FieldAccess*>(left) != NULL) {
-				FieldAccess* dynamcast = dynamic_cast<FieldAccess*>(left);
-
-				printf("STILL NEED TO DO FIELD ACCESS ASSIGN\n");
+				printf("Should not reach here\n");
 			}
 			else if(dynamic_cast<VarExpr*>(left) != NULL) {
 				llvm::Value* newVal = llvm::BinaryOperator::CreateSub(l, r, "ISubA", irgen->GetBasicBlock());
@@ -1549,9 +1542,7 @@ llvm::Value* AssignExpr::Emit() {
 				return vExprInst;
 			}
 			else if(dynamic_cast<FieldAccess*>(left) != NULL) {
-				FieldAccess* dynamcast = dynamic_cast<FieldAccess*>(left);
-
-				printf("STILL NEED TO DO FIELD ACCESS ASSIGN\n");
+				printf("Should not reach here\n");
 			}
 			else if(dynamic_cast<VarExpr*>(left) != NULL) {
 				llvm::Value* newVal = llvm::BinaryOperator::CreateSDiv(l, r, "IDivA", irgen->GetBasicBlock());
@@ -1595,8 +1586,37 @@ llvm::Value* AssignExpr::Emit() {
 			}
 			else if(dynamic_cast<FieldAccess*>(left) != NULL) {
 				FieldAccess* dynamcast = dynamic_cast<FieldAccess*>(left);
+				VarExpr* baseExpr = dynamic_cast<VarExpr*>(dynamcast->base);
 
-				printf("STILL NEED TO DO FIELD ACCESS ASSIGN\n");
+				llvm::Value* baseVec = dynamcast->base->Emit();
+				llvm::Value* fieldIdx;
+				llvm::Value* tempVal = symtab->val_search(string(baseExpr->GetIdentifier()->GetName()));
+				string swiz = string(dynamcast->field->GetName());
+
+				if(swiz.length() == 1) {
+					if(swiz[0] == 'x') {
+						fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+					}
+					else if(swiz[0] == 'y') {
+						fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+					}
+					else if(swiz[0] == 'z') {
+						fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+					}
+					else if(swiz[0] == 'w') {
+						fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+					}
+				}
+				else {
+					printf("Should not reach here\n");
+				}
+
+				llvm::Value* newVec = llvm::InsertElementInst::Create(baseVec, r, fieldIdx, "Insert Vector", irgen->GetBasicBlock());
+				
+				new llvm::StoreInst(newVec, tempVal, irgen->GetBasicBlock());
+
+				llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, baseExpr->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+				return llvm::ExtractElementInst::Create(vExprInst, fieldIdx, "Extract Element", irgen->GetBasicBlock());;
 			}
 			else if(dynamic_cast<VarExpr*>(left) != NULL) {
 				VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
@@ -1783,13 +1803,56 @@ llvm::Value* AssignExpr::Emit() {
 		this->type = Type::floatType;
 
 		if(op->IsOp("=")) {
-			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
-			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+			if(dynamic_cast<ArrayAccess*>(left) != NULL) {
 
-			//return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
-			new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
-			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
-			return vExprInst;
+			}
+			else if(dynamic_cast<FieldAccess*>(left) != NULL) {
+				FieldAccess* d = dynamic_cast<FieldAccess*>(left);
+				VarExpr* baseExpr = dynamic_cast<VarExpr*>(d->base);
+				string swiz = string(d->field->GetName());
+				llvm::Value* baseMem = d->base->Emit();
+
+				for(int i = 0; i < swiz.length(); i++) {
+					llvm::Value* fieldIdx = llvm::ConstantInt::get(irgen->GetIntType(), i);
+					
+					llvm::Value* val = llvm::ExtractElementInst::Create(r,fieldIdx,"Extract Element",irgen->GetBasicBlock());
+				
+					llvm::Value* insertIdx;
+					if(swiz[i] == 'x') {
+						insertIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+					}
+					else if(swiz[i] == 'y') {
+						insertIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+					}
+					else if(swiz[i] == 'z') {
+						insertIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+					}
+					else if(swiz[i] == 'w') {
+						insertIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+					}
+					else {
+						printf("Should not reach here\n");
+					}
+
+					baseMem = llvm::InsertElementInst::Create(baseMem,val,insertIdx,"Insert Element",irgen->GetBasicBlock());
+				}
+			
+				llvm::Value* tempVal = symtab->val_search(string(baseExpr->GetIdentifier()->GetName()));
+				new llvm::StoreInst(baseMem, tempVal, irgen->GetBasicBlock());
+
+				//llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, d->base->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+
+				return baseMem;
+			}
+			else if(dynamic_cast<VarExpr*>(left) != NULL) {
+				VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+				llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+				//return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
+				new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
+				llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+				return vExprInst;
+			}
 		}
 		else if(op->IsOp("+=")) {
 			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
@@ -1873,13 +1936,21 @@ llvm::Value* AssignExpr::Emit() {
 		this->type = Type::vec3Type;
 
 		if(op->IsOp("=")) {
-			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
-			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+			if(dynamic_cast<ArrayAccess*>(left) != NULL) {
 
-			//return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
-			new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
-			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
-			return vExprInst;
+			}
+			else if(dynamic_cast<FieldAccess*>(left) != NULL) {
+
+			}
+			else if(dynamic_cast<VarExpr*>(left) != NULL) {
+				VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+				llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+				//return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
+				new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
+				llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+				return vExprInst;
+			}
 		}
 		else if(op->IsOp("+=")) {
 			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
@@ -1974,13 +2045,21 @@ llvm::Value* AssignExpr::Emit() {
 		this->type = Type::vec4Type;
 
 		if(op->IsOp("=")) {
-			VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
-			llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+			if(dynamic_cast<ArrayAccess*>(left) != NULL) {
 
-			//return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
-			new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
-			llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
-			return vExprInst;
+			}
+			else if(dynamic_cast<FieldAccess*>(left) != NULL) {
+
+			}
+			else if(dynamic_cast<VarExpr*>(left) != NULL) {
+				VarExpr* dynamcast = dynamic_cast<VarExpr*>(left);
+				llvm::Value* tempVal = symtab->val_search(string(dynamcast->GetIdentifier()->GetName()));
+
+				//return new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
+				new llvm::StoreInst(r, tempVal, irgen->GetBasicBlock());
+				llvm::LoadInst* vExprInst = new llvm::LoadInst(tempVal, dynamcast->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+				return vExprInst;
+			}
 		}
 		else if(op->IsOp("+=")) {
 			llvm::Value* x = llvm::ExtractElementInst::Create(l,llvm::ConstantInt::get(irgen->GetIntType(),0),"Access x", irgen->GetBasicBlock());
