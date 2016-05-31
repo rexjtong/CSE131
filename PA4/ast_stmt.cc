@@ -53,7 +53,7 @@ llvm::Value* Program::Emit() {
 	symtab->pop_scope();
 
 	//TODO DEBUG METHOD
-	//mod->dump();
+	mod->dump();
 
 	llvm::WriteBitcodeToFile(mod, llvm::outs());
 
@@ -137,6 +137,12 @@ llvm::Value* StmtBlock::Emit() {
 			new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
 		//	if ( footerStack.size() == 
 		//}
+	}
+
+	else if(irgen->GetBasicBlock()->getTerminator() == NULL && symtab->currentScope == 1) {
+		if(irgen->GetFunction()->getReturnType() == llvm::Type::getVoidTy(*context)) {
+			llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
+		}
 	}
 
 	return NULL;
@@ -359,7 +365,7 @@ llvm::Value* ReturnStmt::Emit() {
 	llvm::LLVMContext *context = irgen->GetContext();
 
 	if ( expr == NULL ) {
-		llvm::ReturnInst::Create(*context, llvm::Constant::getNullValue(llvm::Type::getVoidTy(*context)), irgen->GetBasicBlock());
+		llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
 	}
 
 	else if ( expr != NULL ) {
