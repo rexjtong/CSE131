@@ -412,6 +412,30 @@ llvm::Value* SwitchStmt::Emit() {
 
 	std::vector<llvm::BasicBlock*> caseList;
 
+	for(int i = 0; i < cases->NumElements(); i++) {
+		Case* indivCase1 = dynamic_cast<Case*>(cases->Nth(i));
+
+		if ( indivCase1 == NULL ) {
+			continue;
+		}
+
+		else {
+			Case* nested = dynamic_cast<Case*>(indivCase1->stmt);
+			Default* nestedDeflt = dynamic_cast<Default*>(indivCase1->stmt);
+
+			if ( nested != NULL ) {
+				cases->InsertAt(nested, i+1);
+				indivCase1->stmt = NULL;
+			}
+
+			if ( nestedDeflt != NULL ) {
+				cases->InsertAt(nestedDeflt, i+1);
+				indivCase1->stmt = NULL;
+			}
+		}
+
+	}
+
 	for(int i = cases->NumElements()-1; i >= 0; i--) {
 
 		Case* indivCase1 = dynamic_cast<Case*>(cases->Nth(i));
@@ -420,6 +444,7 @@ llvm::Value* SwitchStmt::Emit() {
 			continue;
 		}
 		else {
+			
 			llvm::BasicBlock *curr = llvm::BasicBlock::Create(*context, "Case", irgen->GetFunction());
 			caseList.push_back(curr);
 
@@ -473,7 +498,10 @@ llvm::Value* SwitchStmt::Emit() {
 			llvm::Value* labelVal = indivCase->label->Emit();
 			llvm::ConstantInt *constLabelVal = llvm::cast<llvm::ConstantInt>(labelVal);
 			thisSwitch->llvm::SwitchInst::addCase(constLabelVal, caseList[j]);
-			indivCase->stmt->Emit();
+
+			if( indivCase->stmt != NULL ) {
+				indivCase->stmt->Emit();
+			}
 
 			//if( (caseList[j]->getTerminator()) == NULL) {
 				//llvm::BranchInst::Create(caseList[j+1], caseList[j]);
