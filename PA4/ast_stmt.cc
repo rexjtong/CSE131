@@ -127,7 +127,7 @@ llvm::Value* StmtBlock::Emit() {
 
 	symtab->pop_scope();
 
-	if(irgen->GetBasicBlock()->empty()) {
+	if(irgen->GetBasicBlock()->empty() && symtab->currentScope == 1) {
 		//if ( footerStack.size() > 1 ) {
 		//	llvm::BasicBlock* topBlock = footerBlock.top();
 		//	footerBlock.pop();
@@ -196,7 +196,7 @@ llvm::Value* IfStmt::Emit() {
 	irgen->SetBasicBlock(bb);
 	llvm::Value* bodyVal = body->Emit();
 
-	if( irgen->GetBasicBlock()->getTerminator() == NULL ) {
+	if(!irgen->GetBasicBlock()->getTerminator()) {
 		llvm::BranchInst::Create(fb, irgen->GetBasicBlock());
 	}
 
@@ -204,7 +204,7 @@ llvm::Value* IfStmt::Emit() {
 		irgen->SetBasicBlock(eb);
 		llvm::Value* bodyVal = elseBody->Emit();
 
-		if( irgen->GetBasicBlock()->getTerminator() == NULL ) {
+		if( !irgen->GetBasicBlock()->getTerminator() ) {
 			llvm::BranchInst::Create(fb, irgen->GetBasicBlock());
 		}
 	}
