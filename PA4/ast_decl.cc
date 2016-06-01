@@ -83,8 +83,7 @@ void VarDecl::PrintChildren(int indentLevel) {
 }
 
 llvm::Value* FnDecl::Emit() {
-	//printf("Emitting FnDecl Node\n");
-	symtab->push_scope(SymbolTable::Function);
+//printf("Emitting FnDecl Node\n");
 	std::vector<llvm::Type*> argTypes;
 
 	//llvm::LLVMContext *context = irgen->GetContext();
@@ -104,6 +103,11 @@ llvm::Value* FnDecl::Emit() {
 	llvm::FunctionType* funcTy = llvm::FunctionType::get(irgen->ast_llvm(GetType(), irgen->GetContext()), argArray, false);
 
 	llvm::Function *f = llvm::cast<llvm::Function>(irgen->GetOrCreateModule("Program_Module.bc")->getOrInsertFunction(GetIdentifier()->GetName(), funcTy));
+	
+	printf("ADDING DECLARATION FOR %s\n", GetIdentifier()->GetName());
+	symtab->add_decl(string(GetIdentifier()->GetName()), this, f);
+	symtab->push_scope(SymbolTable::Function);
+
 
 	//bb->insertInto(f, irgen->GetBasicBlock());
 	llvm::LLVMContext *context = irgen->GetContext();
@@ -131,13 +135,12 @@ llvm::Value* FnDecl::Emit() {
 	}
 
 	
-	symtab->add_decl(string(GetIdentifier()->GetName()), this, f);
-
 	irgen->SetBasicBlock(NULL);
 
 	symtab->pop_scope();
 
 	return f;
+
 }
 
 FnDecl::FnDecl(Identifier *n, Type *r, List<VarDecl*> *d) : Decl(n) {
