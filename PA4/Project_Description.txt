@@ -1,0 +1,8 @@
+During this project our primary strategy was to start making Emit() statements for each function depending on the order in which the grammar would use them.
+We started by carrying over our symbol table implementation from PA3, and modifying it to fit the needs of PA4.
+We then began working on emitting the simplest of statements required by the checkpoint, then moving on to much more difficult ones.
+Some difficulties were encountered when working on field access, as using a mask to implement the shuffle vector instruction was confusing.
+Learning to use PhiNodes to implement Conditionals was also not something we anticipated.
+Finally we began testing edge cases to ensure our code was robust and did not crash when presented with edge cases.
+Overall, our code is able to handle most GLSL programs and execute them properly.
+The final result is a GLSL compiler which is able to execute programs with the help of gli and LLVM.

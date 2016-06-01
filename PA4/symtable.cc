@@ -45,7 +45,6 @@ Decl* SymbolTable::search_scope(string ident) {
 			return symbolTable->at(i).at(ident).first;
 		}
 	}
-	printf("ERROR MISSING FROM SYMTABLES\n");
 
 	return NULL;
 }
@@ -58,7 +57,6 @@ llvm::Value* SymbolTable::val_search(string ident) {
 			return symbolTable->at(i).at(ident).second;
 		}
 	}
-	printf("ERROR MISSING FROM SYMTABLES\n");
 
 	return NULL;
 }

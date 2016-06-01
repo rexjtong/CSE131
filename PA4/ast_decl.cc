@@ -14,41 +14,32 @@ Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
 }
 
 llvm::Value* VarDecl::Emit() {
-	//printf("Emitting VarDecl Node\n");
 	llvm::Value* value = NULL;
 	llvm::Value* inst = NULL;
 	
 	if(GetAssign() != NULL) {
-		//printf("Not null VarDecl\n");
 		value = GetAssign()->Emit();
 	}
 	else{
-		//printf("Null VarDecl\n");
 		value = llvm::Constant::getNullValue(irgen->ast_llvm(GetType(), irgen->GetContext()));
 	}
-	
+
 	llvm::Constant* constant = dynamic_cast<llvm::Constant*>(value);
 
 	if(symtab->is_global()) {
-		//printf("VarDecl global: %s\n",id->GetName());
-		//TODO GLOBALS NO LONGER CONST
 		inst = new llvm::GlobalVariable(*irgen->GetOrCreateModule("Program_Module.bc"), irgen->ast_llvm(GetType(), irgen->GetContext()), false, llvm::GlobalValue::ExternalLinkage, constant, id->GetName());
 
 		symtab->add_decl(string(GetIdentifier()->GetName()), this, inst);
 	}
 	else {
-		//printf("VarDecl local\n");
 		inst = new llvm::AllocaInst(irgen->ast_llvm(GetType(), irgen->GetContext()),id->GetName(), irgen->GetBasicBlock());
 
 		symtab->add_decl(string(GetIdentifier()->GetName()), this, inst);
 
-		//GetType()->PrintType();
+		if(GetAssign() != NULL) {
+			new llvm::StoreInst(value,inst,"Initial Store",irgen->GetBasicBlock());
+		}
 
-		//if(dynamic_cast<ArrayType*>(GetType()) != NULL) {
-		//	printf("ARRAY\n");
-		//}
-
-		// new llvm::StoreInst(value, , irgen->GetBasicBlock());
 	}
 
 	return inst;
@@ -83,7 +74,6 @@ void VarDecl::PrintChildren(int indentLevel) {
 }
 
 llvm::Value* FnDecl::Emit() {
-//printf("Emitting FnDecl Node\n");
 	std::vector<llvm::Type*> argTypes;
 
 	//llvm::LLVMContext *context = irgen->GetContext();
@@ -93,8 +83,6 @@ llvm::Value* FnDecl::Emit() {
 
 
 	for(int i = 0; i < formals->NumElements(); i++) {
-		//printf("Adding to argument vec\n");
-		//formals->Nth(i)->Emit();
 	
 		argTypes.push_back(irgen->ast_llvm(formals->Nth(i)->GetType(), irgen->GetContext()));
 	}
@@ -104,7 +92,6 @@ llvm::Value* FnDecl::Emit() {
 
 	llvm::Function *f = llvm::cast<llvm::Function>(irgen->GetOrCreateModule("Program_Module.bc")->getOrInsertFunction(GetIdentifier()->GetName(), funcTy));
 	
-	printf("ADDING DECLARATION FOR %s\n", GetIdentifier()->GetName());
 	symtab->add_decl(string(GetIdentifier()->GetName()), this, f);
 	symtab->push_scope(SymbolTable::Function);
 
